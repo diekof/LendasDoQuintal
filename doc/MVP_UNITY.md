@@ -1,33 +1,81 @@
 # MVP Unity - Lendas do Quintal
 
-Este MVP implementa a primeira area da Fase 1: o quintal amaldicoado, uma onda de inimigos e o mini boss Saci.
+Este MVP implementa a primeira área jogável de **Lendas do Quintal: O Sumiço da Vovó** como um jogo de plataforma 2D com exploração, mistério e combate leve.
 
-## Conteudo jogavel
+## Objetivo do MVP
 
-- Player com movimento em 8 direcoes.
+Validar o núcleo do jogo:
+- movimento lateral;
+- pulo;
+- exploração;
+- interação com objetos;
+- coleta de pistas;
+- combate básico;
+- primeira aparição do Saci.
+
+## Conteúdo Jogável
+
+- Player com movimento lateral.
 - Corrida com `Shift`.
-- Ataque normal com `J` e combo simples.
-- Esquiva com `K`, evitando dano durante o dash.
-- Especial com `L`, consumindo barra de energia.
-- Galinhas possuidas perseguindo e causando dano por contato.
-- Pickups de doce/erva para recuperar vida e energia.
-- Mini boss Saci com perseguicao, teleporte e redemoinhos.
-- HUD com vida, energia, objetivo, vitoria e derrota.
-- Reinicio da fase com `R` apos vitoria/derrota.
+- Pulo com `Espaço`.
+- Ataque normal com `J`.
+- Esquiva ou rolamento curto com `K`.
+- Interação com objetos usando `E`.
+- Suporte inicial a controle: `A` pula, `X` ataca, `Y` interage, `LB/RB` corre e `Start` reinicia.
+- Plataformas sólidas e obstáculos simples.
+- Objetos examináveis dentro da casa da avó.
+- Pistas coletáveis para avançar o objetivo.
+- Inimigos fracos no quintal.
+- Pickups de doce/erva para recuperar vida ou energia.
+- Encontro inicial com o Saci.
+- HUD com vida, energia, pistas e objetivo atual.
+- Checkpoint simples.
+- Reinício da fase com `R` após derrota ou fim do protótipo.
 
-## Como gerar a cena
+## Área do MVP
 
-No Unity, use:
+O MVP cobre:
+- quarto onde a criança acorda;
+- sala bagunçada da avó;
+- cozinha ou varanda;
+- primeiro trecho do quintal;
+- entrada da mata.
+
+## Loop Jogável
+
+1. A criança acorda de madrugada.
+2. O jogador encontra a casa bagunçada.
+3. O jogador examina objetos e coleta a primeira pista.
+4. A saída para o quintal é liberada.
+5. O jogador atravessa plataformas simples no quintal.
+6. O jogador enfrenta inimigos fracos.
+7. O Saci aparece, provoca o jogador e foge.
+8. Uma nova pista aponta para a próxima área.
+
+## Como Gerar a Cena
+
+No Unity, use o menu:
 
 `Lendas do Quintal > Build MVP Scene`
 
 O comando gera:
+- `Assets/Scenes/LendasDoQuintal_MVP.unity`;
+- sprites placeholder em `Assets/Generated`;
+- prefabs em `Assets/Prefabs`;
+- cena adicionada ao Build Settings.
 
-- `Assets/LendasDoQuintal.unity`
-- sprites pixel placeholder em `Assets/Generated`
-- prefabs em `Assets/Prefabs`
-- cena adicionada ao Build Settings
+## Arte Placeholder
 
-## Observacao
+O MVP pode usar arte placeholder gerada por script para validar gameplay. A troca por sprites definitivos deve preservar prefabs, colisores e componentes.
 
-O construtor usa arte placeholder gerada por script para validar gameplay. A troca por sprites definitivos pode ser feita mantendo os mesmos prefabs e componentes.
+## Critérios de Sucesso
+
+O MVP é considerado funcional quando:
+- o player anda e pula com sensação responsiva;
+- a câmera acompanha o jogador sem travar;
+- plataformas e colisões funcionam;
+- o jogador consegue examinar objetos;
+- pistas atualizam o objetivo;
+- inimigos causam e recebem dano;
+- o encontro com o Saci comunica o mistério principal;
+- o protótipo pode ser concluído em poucos minutos.

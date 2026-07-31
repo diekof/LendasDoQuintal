@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lendas do Quintal - POC Preview</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #10182a;
+      color: #f7f1d6;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      image-rendering: pixelated;
+      background: #121b30;
+    }
+  </style>
+</head>
+<body>
+<canvas id="game" width="960" height="540"></canvas>
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const keys = new Set();
+const gravity = 2200;
+const world = {
+  width: 2200,
+  height: 540,
+  objective: "Descubra o que aconteceu.",
+  clues: 0,
+  ended: false,
+  message: ""
+};
+
+const player = {
+  x: 90,
+  y: 338,
+  w: 30,
+  h: 46,
+  vx: 0,
+  vy: 0,
+  hp: 5,
+  facing: 1,
+  grounded: false,
+  attackTimer: 0
+};
+
+const enemy = {
+  x: 960,
+  y: 365,
+  w: 30,
+  h: 30,
+  vx: -80,
+  hp: 3,
+  alive: true,
+  hitCooldown: 0
+};
+
+const clue = { x: 250, y: 368, w: 22, h: 22, found: false };
+const saci = { x: 1880, y: 320, w: 36, h: 56, visible: false };
+
+const platforms = [
+  { x: -100, y: 414, w: 720, h: 80 },
+  { x: 620, y: 414, w: 1580, h: 80 },
+  { x: 720, y: 320, w: 200, h: 24 },
+  { x: 1120, y: 265, w: 220, h: 24 },
+  { x: 1600, y: 325, w: 180, h: 24 }
+];
+
+window.addEventListener("keydown", event => {
+  keys.add(event.code);
+  if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) {
+    event.preventDefault();
+  }
+});
+window.addEventListener("keyup", event => keys.delete(event.code));
+
+function gamepad() {
+  return navigator.getGamepads ? Array.from(navigator.getGamepads()).find(Boolean) : null;
+}
+
+function pressed(buttonIndex) {
+  const pad = gamepad();
+  return !!pad && pad.buttons[buttonIndex] && pad.buttons[buttonIndex].pressed;
+}
+
+function axisX() {
+  const pad = gamepad();
+  const value = pad ? pad.axes[0] || 0 : 0;
+  if (Math.abs(value) < 0.2) return 0;
+  return value;
+}
+
+function inputX() {
+  let value = 0;
+  if (keys.has("KeyA") || keys.has("ArrowLeft")) value -= 1;
+  if (keys.has("KeyD") || keys.has("ArrowRight")) value += 1;
+  return value || axisX();
+}
+
+function wantsJump() {
+  return keys.has("Space") || keys.has("KeyW") || keys.has("ArrowUp") || pressed(0);
+}
+
+function wantsAttack() {
+  return keys.has("KeyJ") || pressed(2);
+}
+
+function wantsInteract() {
+  return keys.has("KeyE") || pressed(3);
+}
+
+function wantsRun() {
+  return keys.has("ShiftLeft") || keys.has("ShiftRight") || pressed(4) || pressed(5);
+}
+
+function wantsRestart() {
+  return keys.has("KeyR") || pressed(9) || pressed(7);
+}
+
+function intersects(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function reset() {
+  player.x = 90;
+  player.y = 338;
+  player.vx = 0;
+  player.vy = 0;
+  player.hp = 5;
+  enemy.x = 960;
+  enemy.hp = 3;
+  enemy.alive = true;
+  clue.found = false;
+  saci.visible = false;
+  world.clues = 0;
+  world.ended = false;
+  world.message = "";
+  world.objective = "Descubra o que aconteceu.";
+}
+
+function moveAndCollide(entity, dt) {
+  entity.x += entity.vx * dt;
+  entity.y += entity.vy * dt;
+  entity.grounded = false;
+
+  for (const p of platforms) {
+    if (intersects(entity, p) && entity.vy >= 0 && entity.y + entity.h - entity.vy * dt <= p.y + 8) {
+      entity.y = p.y - entity.h;
+      entity.vy = 0;
+      entity.grounded = true;
+    }
+  }
+}
+
+function update(dt) {
+  if (world.ended) {
+    if (wantsRestart()) reset();
+    return;
+  }
+
+  const move = inputX();
+  const speed = wantsRun() ? 310 : 220;
+  player.vx = move * speed;
+  if (Math.abs(move) > 0.05) player.facing = Math.sign(move);
+  if (wantsJump() && player.grounded) player.vy = -720;
+  player.vy += gravity * dt;
+  player.attackTimer = Math.max(0, player.attackTimer - dt);
+  moveAndCollide(player, dt);
+
+  if (wantsInteract() && !clue.found && intersects({ x: player.x - 16, y: player.y - 8, w: player.w + 32, h: player.h + 16 }, clue)) {
+    clue.found = true;
+    world.clues = 1;
+    world.objective = "Vá até o quintal.";
+    world.message = "A carta da vovó fala sobre vento no quintal.";
+  }
+
+  if (wantsAttack() && player.attackTimer <= 0) {
+    player.attackTimer = 0.22;
+    const hitBox = { x: player.x + (player.facing > 0 ? player.w : -46), y: player.y + 8, w: 46, h: 28 };
+    if (enemy.alive && intersects(hitBox, enemy)) {
+      enemy.hp -= 1;
+      if (enemy.hp <= 0) enemy.alive = false;
+    }
+  }
+
+  if (enemy.alive) {
+    enemy.x += enemy.vx * dt;
+    if (enemy.x < 750 || enemy.x > 1270) enemy.vx *= -1;
+    enemy.hitCooldown = Math.max(0, enemy.hitCooldown - dt);
+    if (intersects(player, enemy) && enemy.hitCooldown <= 0) {
+      player.hp -= 1;
+      enemy.hitCooldown = 0.8;
+      if (player.hp <= 0) {
+        world.ended = true;
+        world.message = "Você se perdeu no mistério. Pressione R ou Start.";
+      }
+    }
+  }
+
+  if (player.x > 1780) {
+    saci.visible = true;
+    world.objective = "Siga a pista deixada pelo Saci.";
+    world.message = "O Saci apareceu, riu, e sumiu na mata.";
+    world.ended = true;
+  }
+}
+
+function drawRect(x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const camX = Math.max(0, Math.min(world.width - canvas.width, player.x - 260));
+
+  drawRect(0, 0, canvas.width, canvas.height, "#121b30");
+  drawRect(0, 374, canvas.width, 40, "#173b2b");
+
+  for (let i = 0; i < 70; i++) {
+    const x = (i * 91 - camX * 0.35) % 1060;
+    drawRect(x, 72 + (i % 7) * 9, 28, 56, i % 2 ? "#213f35" : "#254b3b");
+  }
+
+  drawRect(40 - camX, 150, 470, 264, "#9c6747");
+  drawRect(74 - camX, 200, 68, 90, "#f1c66b");
+  drawRect(210 - camX, 228, 84, 84, "#442d2a");
+
+  for (const p of platforms) {
+    drawRect(p.x - camX, p.y, p.w, p.h, "#5b432f");
+    drawRect(p.x - camX, p.y, p.w, 8, "#7d5b39");
+  }
+
+  if (!clue.found) {
+    drawRect(clue.x - camX, clue.y, clue.w, clue.h, "#f4cf48");
+  }
+
+  if (enemy.alive) {
+    drawRect(enemy.x - camX, enemy.y, enemy.w, enemy.h, "#d94747");
+    drawRect(enemy.x - camX + 7, enemy.y + 7, 6, 6, "#fff6ce");
+  }
+
+  const playerColor = player.attackTimer > 0 ? "#87d7ff" : "#4591f5";
+  drawRect(player.x - camX, player.y, player.w, player.h, playerColor);
+  drawRect(player.x - camX + (player.facing > 0 ? 22 : 2), player.y + 10, 5, 5, "#fff6ce");
+  if (player.attackTimer > 0) {
+    drawRect(player.x - camX + (player.facing > 0 ? player.w : -46), player.y + 16, 46, 10, "#f7f1d6");
+  }
+
+  if (saci.visible) {
+    drawRect(saci.x - camX, saci.y, saci.w, saci.h, "#25252e");
+    drawRect(saci.x - camX + 5, saci.y - 12, 24, 16, "#c52b2b");
+  }
+
+  drawHud();
+}
+
+function drawHud() {
+  drawRect(0, 0, canvas.width, 94, "rgba(0,0,0,0.45)");
+  ctx.fillStyle = "#f7f1d6";
+  ctx.font = "20px Arial";
+  ctx.fillText(`Vida: ${player.hp}`, 24, 32);
+  ctx.fillText(`Pistas: ${world.clues}`, 24, 62);
+  ctx.fillText(world.objective, 180, 32);
+  ctx.font = "15px Arial";
+  ctx.fillText("Teclado: A/D, Shift, Espaço, J, E, R | Controle: analógico, A, X, Y, LB/RB, Start", 180, 62);
+
+  if (world.message) {
+    drawRect(0, canvas.height - 64, canvas.width, 64, "rgba(0,0,0,0.62)");
+    ctx.fillStyle = "#f7f1d6";
+    ctx.font = "22px Arial";
+    ctx.fillText(world.message, 28, canvas.height - 26);
+  }
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.033, (now - last) / 1000);
+  last = now;
+  update(dt);
+  draw();
+  requestAnimationFrame(frame);
+}
+
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
