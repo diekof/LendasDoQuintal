@@ -25,7 +25,7 @@ namespace LendasDoQuintal.Player
 
         public bool IsGrounded { get; private set; }
         public float HorizontalInput => horizontalInput;
-        public float VerticalVelocity => rb.velocity.y;
+        public float VerticalVelocity => rb.linearVelocity.y;
 
         private void Awake()
         {
@@ -44,7 +44,7 @@ namespace LendasDoQuintal.Player
 
             if (jumpBufferCounter > 0f && coyoteCounter > 0f)
             {
-                rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
                 jumpBufferCounter = 0f;
                 coyoteCounter = 0f;
             }
@@ -54,7 +54,7 @@ namespace LendasDoQuintal.Player
         {
             float speed = InputReader.RunHeld() ? runSpeed : walkSpeed;
 
-            rb.velocity = new Vector2(horizontalInput * speed, rb.velocity.y);
+            rb.linearVelocity = new Vector2(horizontalInput * speed, rb.linearVelocity.y);
 
             if (Mathf.Abs(horizontalInput) > 0.01f)
             {

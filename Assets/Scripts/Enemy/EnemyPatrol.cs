@@ -21,7 +21,7 @@ namespace LendasDoQuintal.Enemy
 
         private void FixedUpdate()
         {
-            rb.velocity = new Vector2(direction * speed, rb.velocity.y);
+            rb.linearVelocity = new Vector2(direction * speed, rb.linearVelocity.y);
 
             bool hasGround = groundCheck == null ||
                 Physics2D.OverlapCircle(groundCheck.position, checkRadius, groundMask);

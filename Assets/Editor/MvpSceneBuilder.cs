@@ -466,11 +466,17 @@ namespace LendasDoQuintal.Editor
 
             Text text = textObject.AddComponent<Text>();
             text.text = value;
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = GetBuiltinUiFont();
             text.fontSize = size;
             text.color = Color.white;
 
             return text;
+        }
+
+        private static Font GetBuiltinUiFont()
+        {
+            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            return font != null ? font : Resources.GetBuiltinResource<Font>("Arial.ttf");
         }
 
         private static GameObject CreatePanel(Transform parent, string name, string message)
