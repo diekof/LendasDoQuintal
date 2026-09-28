@@ -9,6 +9,7 @@ O repositório contém:
 - estrutura mínima de projeto Unity;
 - scripts C# para a POC;
 - gerador de cena placeholder pelo menu do Unity.
+- guia visual e concept art de referência em `Assets/Art/`.
 
 ## Como Testar a POC
 
@@ -20,11 +21,17 @@ O repositório contém:
 Lendas do Quintal > Build MVP Scene
 ```
 
-4. Abra ou rode a cena gerada:
+4. Esse comando também recria os sprites placeholder com a paleta atual.
+5. Abra ou rode a cena gerada:
 
 ```text
 Assets/Scenes/LendasDoQuintal_MVP.unity
 ```
+
+## Arte
+
+- Guia visual: `Assets/Art/STYLE_GUIDE.md`
+- Concept/mood art: `Assets/Art/Concept/lendas_quintal_key_art_reference.png`
 
 ## Controles
 

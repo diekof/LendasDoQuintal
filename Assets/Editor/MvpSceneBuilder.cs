@@ -26,12 +26,12 @@ namespace LendasDoQuintal.Editor
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             scene.name = "LendasDoQuintal_MVP";
 
-            Sprite playerSprite = CreateSprite("Player_Placeholder", new Color32(66, 145, 245, 255));
-            Sprite enemySprite = CreateSprite("Enemy_Chicken_Placeholder", new Color32(226, 76, 76, 255));
-            Sprite clueSprite = CreateSprite("Clue_Placeholder", new Color32(246, 207, 72, 255));
-            Sprite groundSprite = CreateSprite("Ground_Placeholder", new Color32(90, 65, 45, 255));
-            Sprite houseSprite = CreateSprite("House_Placeholder", new Color32(167, 105, 66, 255));
-            Sprite saciSprite = CreateSprite("Saci_Placeholder", new Color32(36, 36, 42, 255));
+            Sprite playerSprite = CreateSprite("Player_Placeholder", PixelSpriteKind.Player);
+            Sprite enemySprite = CreateSprite("Enemy_Chicken_Placeholder", PixelSpriteKind.EnemyChicken);
+            Sprite clueSprite = CreateSprite("Clue_Placeholder", PixelSpriteKind.Clue);
+            Sprite groundSprite = CreateSprite("Ground_Placeholder", PixelSpriteKind.Ground);
+            Sprite houseSprite = CreateSprite("House_Placeholder", PixelSpriteKind.House);
+            Sprite saciSprite = CreateSprite("Saci_Placeholder", PixelSpriteKind.Saci);
 
             GameObject systems = new GameObject("GameFlow");
             ClueSystem clueSystem = systems.AddComponent<ClueSystem>();
@@ -88,24 +88,14 @@ namespace LendasDoQuintal.Editor
             }
         }
 
-        private static Sprite CreateSprite(string name, Color32 color)
+        private static Sprite CreateSprite(string name, PixelSpriteKind kind)
         {
             string texturePath = $"{GeneratedPath}/{name}.png";
-            if (!File.Exists(texturePath))
-            {
-                Texture2D texture = new Texture2D(16, 16, TextureFormat.RGBA32, false);
-                Color32[] pixels = new Color32[16 * 16];
-                for (int i = 0; i < pixels.Length; i++)
-                {
-                    pixels[i] = color;
-                }
-
-                texture.SetPixels32(pixels);
-                texture.Apply();
-                File.WriteAllBytes(texturePath, texture.EncodeToPNG());
-                Object.DestroyImmediate(texture);
-                AssetDatabase.ImportAsset(texturePath);
-            }
+            Texture2D texture = CreatePixelTexture(kind);
+            texture.Apply();
+            File.WriteAllBytes(texturePath, texture.EncodeToPNG());
+            Object.DestroyImmediate(texture);
+            AssetDatabase.ImportAsset(texturePath);
 
             TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(texturePath);
             importer.textureType = TextureImporterType.Sprite;
@@ -115,6 +105,178 @@ namespace LendasDoQuintal.Editor
             importer.SaveAndReimport();
 
             return AssetDatabase.LoadAssetAtPath<Sprite>(texturePath);
+        }
+
+        private static Texture2D CreatePixelTexture(PixelSpriteKind kind)
+        {
+            Texture2D texture = new Texture2D(16, 16, TextureFormat.RGBA32, false);
+            Color32 clear = new Color32(0, 0, 0, 0);
+            Color32[] pixels = new Color32[16 * 16];
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                pixels[i] = clear;
+            }
+
+            switch (kind)
+            {
+                case PixelSpriteKind.Player:
+                    DrawPlayer(pixels);
+                    break;
+                case PixelSpriteKind.EnemyChicken:
+                    DrawChicken(pixels);
+                    break;
+                case PixelSpriteKind.Clue:
+                    DrawClue(pixels);
+                    break;
+                case PixelSpriteKind.Ground:
+                    DrawGround(pixels);
+                    break;
+                case PixelSpriteKind.House:
+                    DrawHouse(pixels);
+                    break;
+                case PixelSpriteKind.Saci:
+                    DrawSaci(pixels);
+                    break;
+            }
+
+            texture.SetPixels32(pixels);
+            texture.filterMode = FilterMode.Point;
+            return texture;
+        }
+
+        private static void DrawPlayer(Color32[] p)
+        {
+            Color32 ink = Palette.Ink;
+            Color32 skin = new Color32(178, 96, 45, 255);
+            Color32 skinLight = new Color32(239, 151, 75, 255);
+            Color32 blue = new Color32(18, 88, 202, 255);
+            Color32 blueLight = new Color32(21, 174, 255, 255);
+            Color32 cap = new Color32(246, 177, 25, 255);
+
+            FillRect(p, 5, 2, 6, 2, cap);
+            FillRect(p, 4, 4, 8, 5, skin);
+            Set(p, 7, 5, skinLight);
+            Set(p, 10, 6, Palette.WarmLight);
+            FillRect(p, 3, 9, 10, 5, blue);
+            FillRect(p, 4, 10, 3, 1, blueLight);
+            FillRect(p, 4, 14, 3, 2, ink);
+            FillRect(p, 9, 14, 3, 2, ink);
+            Outline(p);
+        }
+
+        private static void DrawChicken(Color32[] p)
+        {
+            FillRect(p, 4, 7, 8, 6, new Color32(232, 213, 155, 255));
+            FillRect(p, 6, 5, 5, 4, new Color32(247, 234, 184, 255));
+            Set(p, 9, 6, Palette.Ink);
+            Set(p, 11, 7, new Color32(245, 87, 35, 255));
+            Set(p, 7, 4, new Color32(212, 33, 55, 255));
+            Set(p, 8, 4, new Color32(212, 33, 55, 255));
+            FillRect(p, 5, 13, 2, 2, new Color32(232, 121, 36, 255));
+            FillRect(p, 10, 13, 2, 2, new Color32(232, 121, 36, 255));
+            Set(p, 3, 10, new Color32(139, 31, 40, 255));
+            Outline(p);
+        }
+
+        private static void DrawClue(Color32[] p)
+        {
+            FillRect(p, 4, 3, 8, 10, new Color32(244, 223, 164, 255));
+            FillRect(p, 5, 4, 6, 1, Palette.WarmLight);
+            FillRect(p, 6, 7, 4, 1, new Color32(116, 76, 49, 255));
+            FillRect(p, 6, 9, 3, 1, new Color32(116, 76, 49, 255));
+            Set(p, 10, 11, new Color32(202, 55, 55, 255));
+            Outline(p);
+        }
+
+        private static void DrawGround(Color32[] p)
+        {
+            FillRect(p, 0, 0, 16, 16, new Color32(83, 58, 35, 255));
+            FillRect(p, 0, 0, 16, 3, new Color32(43, 117, 50, 255));
+            FillRect(p, 1, 1, 3, 1, new Color32(111, 190, 35, 255));
+            FillRect(p, 8, 1, 4, 1, new Color32(111, 190, 35, 255));
+            Set(p, 3, 7, new Color32(141, 91, 47, 255));
+            Set(p, 12, 11, new Color32(35, 28, 24, 255));
+            Set(p, 7, 14, new Color32(141, 91, 47, 255));
+        }
+
+        private static void DrawHouse(Color32[] p)
+        {
+            FillRect(p, 0, 0, 16, 16, new Color32(95, 53, 30, 255));
+            FillRect(p, 0, 0, 16, 2, new Color32(202, 96, 31, 255));
+            FillRect(p, 2, 4, 5, 6, Palette.WarmLight);
+            FillRect(p, 3, 5, 3, 4, new Color32(255, 205, 82, 255));
+            FillRect(p, 9, 3, 2, 13, new Color32(48, 28, 23, 255));
+            FillRect(p, 0, 12, 16, 2, new Color32(54, 32, 25, 255));
+        }
+
+        private static void DrawSaci(Color32[] p)
+        {
+            Color32 shadow = new Color32(10, 11, 18, 255);
+            FillRect(p, 5, 5, 6, 8, shadow);
+            FillRect(p, 4, 8, 2, 3, shadow);
+            FillRect(p, 10, 8, 2, 3, shadow);
+            FillRect(p, 6, 2, 5, 3, new Color32(194, 30, 51, 255));
+            Set(p, 10, 1, new Color32(238, 68, 79, 255));
+            Set(p, 7, 7, new Color32(255, 210, 67, 255));
+            Set(p, 10, 7, new Color32(255, 210, 67, 255));
+            Set(p, 3, 4, new Color32(238, 18, 57, 255));
+            Set(p, 2, 5, new Color32(238, 18, 57, 255));
+            Set(p, 1, 6, new Color32(111, 190, 35, 255));
+        }
+
+        private static void Outline(Color32[] p)
+        {
+            Color32[] copy = (Color32[])p.Clone();
+            for (int y = 0; y < 16; y++)
+            {
+                for (int x = 0; x < 16; x++)
+                {
+                    if (copy[y * 16 + x].a == 0)
+                    {
+                        continue;
+                    }
+
+                    TrySetEmpty(p, x - 1, y, Palette.Ink);
+                    TrySetEmpty(p, x + 1, y, Palette.Ink);
+                    TrySetEmpty(p, x, y - 1, Palette.Ink);
+                    TrySetEmpty(p, x, y + 1, Palette.Ink);
+                }
+            }
+        }
+
+        private static void FillRect(Color32[] pixels, int x, int y, int width, int height, Color32 color)
+        {
+            for (int py = y; py < y + height; py++)
+            {
+                for (int px = x; px < x + width; px++)
+                {
+                    Set(pixels, px, py, color);
+                }
+            }
+        }
+
+        private static void Set(Color32[] pixels, int x, int y, Color32 color)
+        {
+            if (x < 0 || x >= 16 || y < 0 || y >= 16)
+            {
+                return;
+            }
+
+            pixels[y * 16 + x] = color;
+        }
+
+        private static void TrySetEmpty(Color32[] pixels, int x, int y, Color32 color)
+        {
+            if (x < 0 || x >= 16 || y < 0 || y >= 16)
+            {
+                return;
+            }
+
+            int index = y * 16 + x;
+            if (pixels[index].a == 0)
+            {
+                pixels[index] = color;
+            }
         }
 
         private static void CreateEnvironment(Sprite groundSprite, Sprite houseSprite)
@@ -396,5 +558,21 @@ namespace LendasDoQuintal.Editor
             updatedScenes[updatedScenes.Length - 1] = new EditorBuildSettingsScene(scenePath, true);
             EditorBuildSettings.scenes = updatedScenes;
         }
+    }
+
+    internal enum PixelSpriteKind
+    {
+        Player,
+        EnemyChicken,
+        Clue,
+        Ground,
+        House,
+        Saci
+    }
+
+    internal static class Palette
+    {
+        public static readonly Color32 Ink = new Color32(7, 10, 18, 255);
+        public static readonly Color32 WarmLight = new Color32(255, 181, 45, 255);
     }
 }
