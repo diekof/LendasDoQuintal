@@ -1,134 +1,240 @@
 # Lendas do Quintal: O Sumiço da Vovó - Setup do Protótipo
 
-## 1) Estrutura de pastas sugerida
-- `Assets/Scripts/Core/Health.cs`
-- `Assets/Scripts/Player/PlayerMovement.cs`
-- `Assets/Scripts/Player/PlayerCombat.cs`
-- `Assets/Scripts/Enemy/EnemyChase.cs`
-- `Assets/Scripts/Enemy/EnemyCombat.cs`
-- `Assets/Scripts/Camera/CameraFollow.cs`
+Este documento descreve uma base técnica inicial para o protótipo Unity de plataforma 2D.
 
-## 2) Hierarquia da cena (exemplo)
+## 1. Estrutura de Pastas Sugerida
+
+```text
+Assets/
+  Scenes/
+  Scripts/
+    Core/
+      Health.cs
+      DamageDealer.cs
+    Player/
+      PlayerPlatformMovement.cs
+      PlayerCombat.cs
+      PlayerInteraction.cs
+    Enemy/
+      EnemyPatrol.cs
+      EnemyChase.cs
+      EnemyCombat.cs
+    Systems/
+      ClueSystem.cs
+      ObjectiveSystem.cs
+      CheckpointSystem.cs
+      GameFlowController.cs
+    Camera/
+      CameraFollow2D.cs
+    UI/
+      HealthBarUI.cs
+      ObjectiveUI.cs
+      ClueCounterUI.cs
+  Prefabs/
+  Art/
+  Audio/
+  Animations/
+  UI/
+```
+
+## 2. Hierarquia da Cena
+
+Exemplo para a primeira cena do MVP:
+
 - `Main Camera`
-- `GameManager` (opcional)
+- `GameFlow`
+- `Canvas`
 - `Environment`
 - `Player`
-- `Enemy_01`
-- `Enemy_02` (opcional)
+- `Checkpoint_Start`
+- `Interactables`
+- `Clues`
+- `Enemies`
+- `SaciEncounter`
 
-## 3) Configuração do Player
+## 3. Configuração do Player
+
 Objeto: `Player`
 
 Componentes:
 - `Rigidbody2D`
-- `CapsuleCollider2D` (ou `BoxCollider2D`)
+- `CapsuleCollider2D` ou `BoxCollider2D`
 - `Health`
-- `PlayerMovement`
+- `PlayerPlatformMovement`
 - `PlayerCombat`
-- `Animator` (no filho visual ou no próprio objeto)
-- `SpriteRenderer` (no filho visual ou no próprio objeto)
+- `PlayerInteraction`
+- `Animator`
+- `SpriteRenderer`
 
 Configuração importante:
 - Tag: `Player`
 - Layer: `Player`
 - `Rigidbody2D`:
   - Body Type: Dynamic
-  - Gravity Scale: `0`
+  - Gravity Scale: valor maior que `0`
   - Freeze Rotation Z: `true`
-- Crie um filho chamado `AttackPoint` na frente do player.
-- Em `PlayerCombat`:
-  - Arraste `AttackPoint` para `attackPoint`
-  - Defina `enemyLayer` para a layer dos inimigos
+- Collider ajustado ao corpo do personagem.
+- Criar um filho chamado `GroundCheck`.
+- Criar um filho chamado `AttackPoint`.
+- Criar um filho chamado `InteractionPoint`.
 
-## 4) Configuração do Enemy
-Objeto: `Enemy_01`
+## 4. Movimento de Plataforma
+
+Inputs sugeridos:
+- Movimento: `A/D` ou setas;
+- Corrida: `Shift`;
+- Pulo: `Espaço`;
+- Ataque: `J`;
+- Esquiva: `K`;
+- Interação: `E`;
+- Reiniciar: `R`.
+
+Parâmetros iniciais:
+- velocidade de caminhada;
+- velocidade de corrida;
+- força do pulo;
+- checagem de chão;
+- tolerância pequena para pulo logo após sair da plataforma;
+- buffer curto para pulo antes de tocar o chão.
+
+## 5. Configuração do Cenário
+
+Objetos de chão e plataforma:
+- `TilemapCollider2D` ou `BoxCollider2D`;
+- Layer: `Ground`;
+- se usar Tilemap, considerar `CompositeCollider2D`.
+
+Elementos iniciais:
+- piso da casa;
+- móveis como obstáculos;
+- janela ou porta interativa;
+- plataformas no quintal;
+- cerca;
+- poço;
+- galinheiro.
+
+## 6. Configuração dos Interactables
+
+Objetos examináveis devem ter:
+- collider com `Is Trigger`;
+- script de interação;
+- texto curto de descrição;
+- indicação se entrega pista ou apenas comentário.
+
+Exemplos:
+- carta rasgada da avó;
+- cadeira caída;
+- janela aberta;
+- marcas de redemoinho;
+- gorro vermelho preso no galho.
+
+## 7. Sistema de Pistas
+
+Scripts sugeridos:
+- `ClueSystem`;
+- `CluePickup`;
+- `ObjectiveSystem`;
+- `ObjectiveUI`.
+
+Fluxo:
+1. O jogador interage com um objeto.
+2. O objeto registra uma pista.
+3. O contador de pistas é atualizado.
+4. O objetivo atual muda quando pistas obrigatórias são encontradas.
+5. Uma porta, passagem ou encontro pode ser liberado.
+
+## 8. Configuração de Inimigos
+
+Objeto: `Enemy_Chicken` ou `Enemy_Shadow`
 
 Componentes:
 - `Rigidbody2D`
-- `CapsuleCollider2D` (ou `BoxCollider2D`)
+- `Collider2D`
 - `Health`
-- `EnemyChase`
+- `EnemyPatrol`
 - `EnemyCombat`
-- `Animator` (opcional)
+- `Animator`
 - `SpriteRenderer`
 
 Configuração importante:
-- Tag: `Enemy` (opcional para organização)
+- Tag: `Enemy`
 - Layer: `Enemy`
 - `Rigidbody2D`:
   - Body Type: Dynamic
-  - Gravity Scale: `0`
+  - Gravity Scale: maior que `0`
   - Freeze Rotation Z: `true`
-- `EnemyChase.target` pode ficar vazio (ele busca o Player por tag automaticamente)
+- Inimigo deve respeitar chão, paredes e bordas.
 
-## 5) Configuração da câmera
+## 9. Configuração da Câmera
+
 Objeto: `Main Camera`
 
 Componentes:
 - `Camera`
 - `AudioListener`
-- `CameraFollow`
+- `CameraFollow2D`
 
 Configuração importante:
-- `CameraFollow.target` pode ficar vazio (busca Player por tag)
-- Ajuste `offset` para `0, 0, -10`
+- `CameraFollow2D.target` pode buscar o player por tag;
+- offset sugerido: `0, 1, -10`;
+- suavização leve;
+- limites opcionais da fase para não mostrar fora do cenário.
 
-## 6) Inputs
-- Movimento: `WASD` ou setas (eixos padrão `Horizontal` e `Vertical`)
-- Ataque: tecla `J`
+## 10. HUD
 
-## 7) Animator (extra)
+Elementos:
+- barra de vida;
+- barra de energia;
+- contador de pistas;
+- texto de objetivo atual;
+- painel de diálogo curto;
+- tela de derrota;
+- tela de fim do protótipo.
+
+## 11. Fluxo de Fase
+
+Scripts sugeridos:
+- `GameFlowController`;
+- `CheckpointSystem`;
+- `ObjectiveSystem`.
+
+Fluxo esperado:
+1. Cena inicia no quarto.
+2. Objetivo: "Descubra o que aconteceu."
+3. Jogador examina a casa.
+4. Após a pista obrigatória, objetivo muda para "Vá até o quintal."
+5. Jogador atravessa o quintal.
+6. Encontro com Saci é ativado.
+7. Saci foge.
+8. Protótipo termina com nova pista.
+
+## 12. Animator
+
 Parâmetros sugeridos:
 - `Speed` (Float)
-- `MoveX` (Float)
-- `MoveY` (Float)
+- `IsGrounded` (Bool)
+- `VerticalVelocity` (Float)
 - `Attack` (Trigger)
+- `Hurt` (Trigger)
+- `Interact` (Trigger)
 
-Uso básico:
-- Idle <-> Walk com condição `Speed > 0.01`
-- Transição para ataque via Trigger `Attack`
+Estados mínimos:
+- Idle;
+- Run;
+- Jump;
+- Fall;
+- Attack;
+- Hurt;
+- Interact.
 
-## 8) Resultado esperado
+## 13. Resultado Esperado
+
 Com essa base:
-- Player anda em 8 direções
-- Player ataca com cooldown
-- Inimigo persegue e para em distância mínima
-- Inimigo causa dano por contato
-- Ambos usam `Health`
-- Inimigo morre ao zerar vida
-- Câmera segue o player suavemente
-
-## 9) Sistemas adicionais (onda + vitória/derrota + HUD)
-Novos scripts:
-- `Assets/Scripts/Systems/EnemySpawner.cs`
-- `Assets/Scripts/Systems/GameFlowController.cs`
-- `Assets/Scripts/UI/HealthBarUI.cs`
-
-### Spawner de inimigos
-1. Crie um objeto vazio `EnemySpawner`.
-2. Adicione o componente `EnemySpawner`.
-3. Arraste o prefab do inimigo em `enemyPrefab`.
-4. Crie 3 a 6 objetos vazios como pontos de spawn (ex.: `SpawnPoint_A`, `SpawnPoint_B`...).
-5. Arraste todos para a lista `spawnPoints`.
-6. Ajuste:
-   - `totalToSpawn` (ex.: 6)
-   - `maxAliveEnemies` (ex.: 2)
-   - `spawnInterval` (ex.: 1.5)
-
-### Fluxo de fase (vitória / derrota)
-1. Crie um objeto vazio `GameFlow`.
-2. Adicione `GameFlowController`.
-3. Arraste:
-   - `playerHealth` = componente `Health` do player
-   - `enemySpawner` = objeto `EnemySpawner`
-   - `victoryPanel` e `gameOverPanel` (UI opcionais)
-4. Durante fim de partida, tecla `R` reinicia a cena.
-
-### HUD de vida do jogador
-1. Crie um `Canvas` (Screen Space - Overlay).
-2. Dentro do Canvas, crie `UI > Slider` chamado `PlayerHealthBar`.
-3. Adicione `HealthBarUI` no mesmo objeto do slider.
-4. Em `HealthBarUI`:
-   - `targetHealth` = `Health` do player
-   - `healthSlider` = slider atual
-5. Opcional: para barra de inimigo, duplique o slider e troque o `targetHealth`.
+- o player anda, corre e pula;
+- o player interage com objetos;
+- pistas atualizam o objetivo;
+- inimigos patrulham e atacam;
+- o player causa e recebe dano;
+- a câmera segue suavemente;
+- checkpoints funcionam;
+- o MVP comunica a história do desaparecimento da avó.

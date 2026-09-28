@@ -1,0 +1,54 @@
+# Lendas do Quintal: O Sumiço da Vovó
+
+POC em Unity 2D para um jogo de plataforma, aventura e mistério inspirado no folclore brasileiro.
+
+## Estado Atual
+
+O repositório contém:
+- documentação de design em `doc/`;
+- estrutura mínima de projeto Unity;
+- scripts C# para a POC;
+- gerador de cena placeholder pelo menu do Unity.
+
+## Como Testar a POC
+
+1. Abra esta pasta no Unity Hub.
+2. Use uma versão Unity 2D compatível com projetos C# e UGUI.
+3. No editor, abra o menu:
+
+```text
+Lendas do Quintal > Build MVP Scene
+```
+
+4. Abra ou rode a cena gerada:
+
+```text
+Assets/Scenes/LendasDoQuintal_MVP.unity
+```
+
+## Controles
+
+- `A/D` ou setas: mover;
+- `Shift`: correr;
+- `Espaço`: pular;
+- `J`: atacar;
+- `E`: interagir;
+- `R`: reiniciar após derrota ou fim do protótipo.
+
+## Controle
+
+- Analógico esquerdo ou direcional: mover;
+- `A`: pular;
+- `X`: atacar;
+- `Y`: interagir;
+- `LB/RB`: correr;
+- `Start`: reiniciar após derrota ou fim do protótipo.
+
+## Loop da POC
+
+1. A criança acorda na casa da avó.
+2. O jogador examina uma pista.
+3. O objetivo muda para ir ao quintal.
+4. O jogador atravessa plataformas simples.
+5. Um inimigo patrulha o quintal.
+6. O encontro com o Saci encerra o protótipo.
