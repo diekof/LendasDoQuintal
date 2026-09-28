@@ -18,6 +18,7 @@ namespace LendasDoQuintal.Editor
         private const string ScenePath = "Assets/Scenes/LendasDoQuintal_MVP.unity";
         private const string GeneratedPath = "Assets/Generated";
         private const string HeroSpritePath = "Assets/Art/Characters/Hero/hero_idle_side_64.png";
+        private const string HeroWalkPath = "Assets/Art/Characters/Hero/Walk";
 
         [MenuItem("Lendas do Quintal/Build MVP Scene")]
         public static void BuildMvpScene()
@@ -123,6 +124,26 @@ namespace LendasDoQuintal.Editor
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.SaveAndReimport();
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
+        private static Sprite[] LoadSpriteSequence(string folder, string prefix, float pixelsPerUnit)
+        {
+            if (!Directory.Exists(folder))
+            {
+                return new Sprite[0];
+            }
+
+            string[] files = Directory.GetFiles(folder, $"{prefix}*.png");
+            System.Array.Sort(files);
+
+            Sprite[] sprites = new Sprite[files.Length];
+            for (int i = 0; i < files.Length; i++)
+            {
+                string assetPath = files[i].Replace("\\", "/");
+                sprites[i] = LoadProjectSprite(assetPath, pixelsPerUnit);
+            }
+
+            return sprites;
         }
 
         private static Texture2D CreatePixelTexture(PixelSpriteKind kind)
@@ -361,6 +382,9 @@ namespace LendasDoQuintal.Editor
 
             PlayerInteraction interaction = player.AddComponent<PlayerInteraction>();
             interaction.Configure(interactionPoint, ~0);
+
+            PlayerSpriteAnimator spriteAnimator = player.AddComponent<PlayerSpriteAnimator>();
+            spriteAnimator.Configure(movement, renderer, sprite, LoadSpriteSequence(HeroWalkPath, "hero_walk_side_", 32f));
 
             return player;
         }

@@ -32,6 +32,8 @@ Assets/Scenes/LendasDoQuintal_MVP.unity
 
 - Guia visual: `Assets/Art/STYLE_GUIDE.md`
 - Concept/mood art: `Assets/Art/Concept/lendas_quintal_key_art_reference.png`
+- Herói idle: `Assets/Art/Characters/Hero/hero_idle_side_64.png`
+- Caminhada do herói: `Assets/Art/Characters/Hero/Walk/`
 
 ## Controles
 
