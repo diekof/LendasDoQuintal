@@ -17,6 +17,7 @@ namespace LendasDoQuintal.Editor
     {
         private const string ScenePath = "Assets/Scenes/LendasDoQuintal_MVP.unity";
         private const string GeneratedPath = "Assets/Generated";
+        private const string HeroSpritePath = "Assets/Art/Characters/Hero/hero_idle_side_64.png";
 
         [MenuItem("Lendas do Quintal/Build MVP Scene")]
         public static void BuildMvpScene()
@@ -26,7 +27,7 @@ namespace LendasDoQuintal.Editor
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             scene.name = "LendasDoQuintal_MVP";
 
-            Sprite playerSprite = CreateSprite("Player_Placeholder", PixelSpriteKind.Player);
+            Sprite playerSprite = LoadProjectSprite(HeroSpritePath, 32f) ?? CreateSprite("Player_Placeholder", PixelSpriteKind.Player);
             Sprite enemySprite = CreateSprite("Enemy_Chicken_Placeholder", PixelSpriteKind.EnemyChicken);
             Sprite clueSprite = CreateSprite("Clue_Placeholder", PixelSpriteKind.Clue);
             Sprite groundSprite = CreateSprite("Ground_Placeholder", PixelSpriteKind.Ground);
@@ -105,6 +106,23 @@ namespace LendasDoQuintal.Editor
             importer.SaveAndReimport();
 
             return AssetDatabase.LoadAssetAtPath<Sprite>(texturePath);
+        }
+
+        private static Sprite LoadProjectSprite(string path, float pixelsPerUnit)
+        {
+            if (!File.Exists(path))
+            {
+                return null;
+            }
+
+            AssetDatabase.ImportAsset(path);
+            TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spritePixelsPerUnit = pixelsPerUnit;
+            importer.filterMode = FilterMode.Point;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.SaveAndReimport();
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
 
         private static Texture2D CreatePixelTexture(PixelSpriteKind kind)

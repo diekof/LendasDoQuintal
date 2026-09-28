@@ -28,4 +28,5 @@ Este guia parte da imagem de referência enviada pelo usuário, usando-a apenas 
 
 - `Assets/Editor/MvpSceneBuilder.cs` gera sprites placeholder seguindo esta paleta.
 - `Assets/Art/Concept/lendas_quintal_key_art_reference.png` serve como referência visual do clima.
+- `Assets/Art/Characters/Hero/hero_idle_side_64.png` é o primeiro sprite real do herói gerado com PixelLab.
 - A arte ainda é placeholder; o objetivo agora é validar direção, legibilidade e atmosfera.
