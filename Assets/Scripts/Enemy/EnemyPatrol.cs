@@ -46,5 +46,10 @@ namespace LendasDoQuintal.Enemy
             wallCheck = newWallCheck;
             groundMask = newGroundMask;
         }
+
+        public void SetSpeed(float value)
+        {
+            speed = Mathf.Max(0f, value);
+        }
     }
 }

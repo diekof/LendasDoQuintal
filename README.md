@@ -10,6 +10,7 @@ O repositório contém:
 - scripts C# para a POC;
 - gerador de cena placeholder pelo menu do Unity.
 - guia visual e concept art de referência em `Assets/Art/`.
+- fundo pixel art largo da fase 1, pronto para câmera 16:9 / 1920x1080.
 
 ## Como Testar a POC
 
@@ -32,8 +33,12 @@ Assets/Scenes/LendasDoQuintal_MVP.unity
 
 - Guia visual: `Assets/Art/STYLE_GUIDE.md`
 - Concept/mood art: `Assets/Art/Concept/lendas_quintal_key_art_reference.png`
+- Fundo fase 1: `Assets/Art/Backgrounds/Phase1_Backyard_Background_Wide.png`
 - Herói idle: `Assets/Art/Characters/Hero/hero_idle_side_64.png`
 - Caminhada do herói: `Assets/Art/Characters/Hero/Walk/`
+- Soco do herói: `Assets/Art/Characters/Hero/Attack/`
+- Pulo do herói: `Assets/Art/Characters/Hero/Jump/`
+- Impacto do soco: `Assets/Art/Effects/Impact/`
 
 ## Controles
 

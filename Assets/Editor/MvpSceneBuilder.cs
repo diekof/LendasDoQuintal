@@ -8,6 +8,7 @@ using LendasDoQuintal.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -17,8 +18,15 @@ namespace LendasDoQuintal.Editor
     {
         private const string ScenePath = "Assets/Scenes/LendasDoQuintal_MVP.unity";
         private const string GeneratedPath = "Assets/Generated";
+        private const string BackgroundPath = "Assets/Art/Backgrounds/Phase1_Backyard_Background_Wide.png";
         private const string HeroSpritePath = "Assets/Art/Characters/Hero/hero_idle_side_64.png";
         private const string HeroWalkPath = "Assets/Art/Characters/Hero/Walk";
+        private const string HeroAttackPath = "Assets/Art/Characters/Hero/Attack";
+        private const string HeroJumpPath = "Assets/Art/Characters/Hero/Jump";
+        private const string ImpactPath = "Assets/Art/Effects/Impact";
+        private const float TargetAspect = 16f / 9f;
+        private const float CameraOrthographicSize = 5.4f;
+        private const float BackgroundPixelsPerUnit = 20f;
 
         [MenuItem("Lendas do Quintal/Build MVP Scene")]
         public static void BuildMvpScene()
@@ -34,13 +42,16 @@ namespace LendasDoQuintal.Editor
             Sprite groundSprite = CreateSprite("Ground_Placeholder", PixelSpriteKind.Ground);
             Sprite houseSprite = CreateSprite("House_Placeholder", PixelSpriteKind.House);
             Sprite saciSprite = CreateSprite("Saci_Placeholder", PixelSpriteKind.Saci);
+            Sprite backgroundSprite = LoadProjectSprite(BackgroundPath, BackgroundPixelsPerUnit) ?? CreateSprite("Phase1_Backyard_Background_Fallback", PixelSpriteKind.Background);
 
             GameObject systems = new GameObject("GameFlow");
             ClueSystem clueSystem = systems.AddComponent<ClueSystem>();
+            ClueMessageSystem clueMessageSystem = systems.AddComponent<ClueMessageSystem>();
             ObjectiveSystem objectiveSystem = systems.AddComponent<ObjectiveSystem>();
             objectiveSystem.Configure(clueSystem);
             GameFlowController gameFlow = systems.AddComponent<GameFlowController>();
 
+            CreatePhaseBackground(backgroundSprite);
             CreateEnvironment(groundSprite, houseSprite);
 
             GameObject player = CreatePlayer(playerSprite);
@@ -54,17 +65,64 @@ namespace LendasDoQuintal.Editor
                 clueSprite,
                 new Vector3(2.5f, -1.45f, 0f),
                 clueSystem,
+                clueMessageSystem,
                 "carta_avo",
                 "A carta da vovó fala sobre vento no quintal."
             );
 
-            GameObject canvas = CreateHud(clueSystem, objectiveSystem, playerHealth, out GameObject gameOverPanel, out GameObject endPanel);
+            GameObject canvas = CreateHud(
+                clueSystem,
+                clueMessageSystem,
+                objectiveSystem,
+                playerHealth,
+                out GameObject gameOverPanel,
+                out GameObject endPanel,
+                out GameObject gameplayHud,
+                out GameObject splashPanel,
+                out GameObject menuPanel,
+                out GameObject difficultyPanel,
+                out Button playButton,
+                out Button continueButton,
+                out Button difficultyButton,
+                out Button easyButton,
+                out Button normalButton,
+                out Button hardButton,
+                out Button insaneButton,
+                out Text selectedDifficultyLabel);
             _ = canvas;
+            CreateEventSystem();
 
             gameFlow.Configure(playerHealth, gameOverPanel, endPanel);
 
             CreateCamera(player.transform);
-            CreateSaciEncounter(saciSprite, objectiveSystem, gameFlow);
+            GameObject saciEncounter = CreateSaciEncounter(saciSprite, objectiveSystem, gameFlow);
+
+            DemoFlowController demoFlow = systems.AddComponent<DemoFlowController>();
+            demoFlow.Configure(
+                splashPanel,
+                menuPanel,
+                difficultyPanel,
+                gameplayHud,
+                playButton,
+                continueButton,
+                difficultyButton,
+                easyButton,
+                normalButton,
+                hardButton,
+                insaneButton,
+                selectedDifficultyLabel,
+                playerHealth,
+                new[] { enemy.GetComponent<EnemyPatrol>() },
+                new[] { enemy.GetComponent<EnemyCombat>() },
+                new MonoBehaviour[]
+                {
+                    player.GetComponent<PlayerPlatformMovement>(),
+                    player.GetComponent<PlayerCombat>(),
+                    player.GetComponent<PlayerInteraction>(),
+                    enemy.GetComponent<EnemyPatrol>(),
+                    enemy.GetComponent<EnemyCombat>(),
+                    saciEncounter.GetComponent<SaciEncounter>()
+                });
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             AddSceneToBuildSettings(ScenePath);
@@ -79,6 +137,11 @@ namespace LendasDoQuintal.Editor
             CreateFolder("Assets", "Scenes");
             CreateFolder("Assets", "Generated");
             CreateFolder("Assets", "Prefabs");
+            CreateFolder("Assets/Art", "Backgrounds");
+            CreateFolder("Assets/Art/Characters/Hero", "Attack");
+            CreateFolder("Assets/Art/Characters/Hero", "Jump");
+            CreateFolder("Assets/Art", "Effects");
+            CreateFolder("Assets/Art/Effects", "Impact");
         }
 
         private static void CreateFolder(string parent, string child)
@@ -176,6 +239,9 @@ namespace LendasDoQuintal.Editor
                 case PixelSpriteKind.Saci:
                     DrawSaci(pixels);
                     break;
+                case PixelSpriteKind.Background:
+                    DrawBackgroundFallback(pixels);
+                    break;
             }
 
             texture.SetPixels32(pixels);
@@ -229,23 +295,23 @@ namespace LendasDoQuintal.Editor
 
         private static void DrawGround(Color32[] p)
         {
-            FillRect(p, 0, 0, 16, 16, new Color32(83, 58, 35, 255));
-            FillRect(p, 0, 0, 16, 3, new Color32(43, 117, 50, 255));
-            FillRect(p, 1, 1, 3, 1, new Color32(111, 190, 35, 255));
-            FillRect(p, 8, 1, 4, 1, new Color32(111, 190, 35, 255));
-            Set(p, 3, 7, new Color32(141, 91, 47, 255));
-            Set(p, 12, 11, new Color32(35, 28, 24, 255));
-            Set(p, 7, 14, new Color32(141, 91, 47, 255));
+            FillRect(p, 0, 0, 16, 16, new Color32(37, 25, 20, 255));
+            FillRect(p, 0, 0, 16, 3, new Color32(19, 57, 42, 255));
+            FillRect(p, 1, 1, 4, 1, new Color32(45, 102, 57, 255));
+            FillRect(p, 8, 1, 5, 1, new Color32(40, 86, 52, 255));
+            Set(p, 3, 7, new Color32(78, 48, 33, 255));
+            Set(p, 12, 11, new Color32(13, 11, 14, 255));
+            Set(p, 7, 14, new Color32(67, 42, 28, 255));
         }
 
         private static void DrawHouse(Color32[] p)
         {
-            FillRect(p, 0, 0, 16, 16, new Color32(95, 53, 30, 255));
-            FillRect(p, 0, 0, 16, 2, new Color32(202, 96, 31, 255));
-            FillRect(p, 2, 4, 5, 6, Palette.WarmLight);
-            FillRect(p, 3, 5, 3, 4, new Color32(255, 205, 82, 255));
-            FillRect(p, 9, 3, 2, 13, new Color32(48, 28, 23, 255));
-            FillRect(p, 0, 12, 16, 2, new Color32(54, 32, 25, 255));
+            FillRect(p, 0, 0, 16, 16, new Color32(48, 29, 24, 255));
+            FillRect(p, 0, 0, 16, 2, new Color32(78, 42, 28, 255));
+            FillRect(p, 2, 4, 5, 6, new Color32(196, 97, 37, 255));
+            FillRect(p, 3, 5, 3, 4, Palette.WarmLight);
+            FillRect(p, 9, 3, 2, 13, new Color32(23, 15, 16, 255));
+            FillRect(p, 0, 12, 16, 2, new Color32(24, 17, 16, 255));
         }
 
         private static void DrawSaci(Color32[] p)
@@ -261,6 +327,25 @@ namespace LendasDoQuintal.Editor
             Set(p, 3, 4, new Color32(238, 18, 57, 255));
             Set(p, 2, 5, new Color32(238, 18, 57, 255));
             Set(p, 1, 6, new Color32(111, 190, 35, 255));
+        }
+
+        private static void DrawBackgroundFallback(Color32[] p)
+        {
+            for (int y = 0; y < 16; y++)
+            {
+                for (int x = 0; x < 16; x++)
+                {
+                    Color32 sky = y > 8 ? new Color32(13, 19, 36, 255) : new Color32(6, 8, 15, 255);
+                    Set(p, x, y, sky);
+                }
+            }
+
+            FillRect(p, 0, 0, 16, 3, new Color32(8, 10, 14, 255));
+            FillRect(p, 1, 3, 5, 5, new Color32(44, 28, 24, 255));
+            FillRect(p, 2, 5, 2, 2, Palette.WarmLight);
+            FillRect(p, 9, 2, 2, 9, new Color32(11, 23, 18, 255));
+            FillRect(p, 12, 2, 2, 11, new Color32(9, 18, 16, 255));
+            Set(p, 13, 8, new Color32(194, 30, 51, 255));
         }
 
         private static void Outline(Color32[] p)
@@ -316,6 +401,24 @@ namespace LendasDoQuintal.Editor
             {
                 pixels[index] = color;
             }
+        }
+
+        private static void CreatePhaseBackground(Sprite backgroundSprite)
+        {
+            GameObject backgroundRoot = new GameObject("Phase1_Backyard_Background");
+            float visibleWidth = CameraOrthographicSize * 2f * TargetAspect;
+            float visibleHeight = CameraOrthographicSize * 2f;
+            float tileHeight = backgroundSprite.bounds.size.y;
+            float scale = visibleHeight / tileHeight;
+
+            GameObject tile = new GameObject("Background_Wide");
+            tile.transform.SetParent(backgroundRoot.transform);
+            tile.transform.position = new Vector3(visibleWidth * 0.5f, 0f, 8f);
+            tile.transform.localScale = new Vector3(scale, scale, 1f);
+
+            SpriteRenderer renderer = tile.AddComponent<SpriteRenderer>();
+            renderer.sprite = backgroundSprite;
+            renderer.sortingOrder = -50;
         }
 
         private static void CreateEnvironment(Sprite groundSprite, Sprite houseSprite)
@@ -378,13 +481,20 @@ namespace LendasDoQuintal.Editor
             movement.Configure(groundCheck, ~0);
 
             PlayerCombat combat = player.AddComponent<PlayerCombat>();
-            combat.Configure(attackPoint, ~0);
+            combat.Configure(attackPoint, ~0, LoadSpriteSequence(ImpactPath, "impact_punch_", 16f));
 
             PlayerInteraction interaction = player.AddComponent<PlayerInteraction>();
             interaction.Configure(interactionPoint, ~0);
 
             PlayerSpriteAnimator spriteAnimator = player.AddComponent<PlayerSpriteAnimator>();
-            spriteAnimator.Configure(movement, renderer, sprite, LoadSpriteSequence(HeroWalkPath, "hero_walk_side_", 32f));
+            spriteAnimator.Configure(
+                movement,
+                combat,
+                renderer,
+                sprite,
+                LoadSpriteSequence(HeroWalkPath, "hero_walk_side_", 32f),
+                LoadSpriteSequence(HeroAttackPath, "hero_attack_side_", 32f),
+                LoadSpriteSequence(HeroJumpPath, "hero_jump_side_", 32f));
 
             return player;
         }
@@ -417,7 +527,7 @@ namespace LendasDoQuintal.Editor
             return enemy;
         }
 
-        private static void CreateInteractable(string name, Sprite sprite, Vector3 position, ClueSystem clueSystem, string clueId, string message)
+        private static void CreateInteractable(string name, Sprite sprite, Vector3 position, ClueSystem clueSystem, ClueMessageSystem clueMessageSystem, string clueId, string message)
         {
             GameObject interactable = new GameObject(name);
             interactable.transform.position = position;
@@ -431,28 +541,60 @@ namespace LendasDoQuintal.Editor
             collider.radius = 0.5f;
 
             InteractableObject interactableObject = interactable.AddComponent<InteractableObject>();
-            interactableObject.Configure(clueSystem, clueId, message);
+            interactableObject.Configure(clueSystem, clueMessageSystem, clueId, message);
         }
 
-        private static GameObject CreateHud(ClueSystem clueSystem, ObjectiveSystem objectiveSystem, Health playerHealth, out GameObject gameOverPanel, out GameObject endPanel)
+        private static GameObject CreateHud(
+            ClueSystem clueSystem,
+            ClueMessageSystem clueMessageSystem,
+            ObjectiveSystem objectiveSystem,
+            Health playerHealth,
+            out GameObject gameOverPanel,
+            out GameObject endPanel,
+            out GameObject gameplayHud,
+            out GameObject splashPanel,
+            out GameObject menuPanel,
+            out GameObject difficultyPanel,
+            out Button playButton,
+            out Button continueButton,
+            out Button difficultyButton,
+            out Button easyButton,
+            out Button normalButton,
+            out Button hardButton,
+            out Button insaneButton,
+            out Text selectedDifficultyLabel)
         {
             GameObject canvas = new GameObject("Canvas");
             Canvas canvasComponent = canvas.AddComponent<Canvas>();
             canvasComponent.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.AddComponent<CanvasScaler>();
+            CanvasScaler scaler = canvas.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
             canvas.AddComponent<GraphicRaycaster>();
 
-            Slider healthSlider = CreateSlider(canvas.transform, "HealthBar", new Vector2(18f, -18f));
+            gameplayHud = CreateUiRoot(canvas.transform, "GameplayHud");
+
+            Slider healthSlider = CreateSlider(gameplayHud.transform, "HealthBar", new Vector2(18f, -18f));
             HealthBarUI healthBar = healthSlider.gameObject.AddComponent<HealthBarUI>();
             healthBar.Configure(playerHealth, healthSlider);
 
-            Text objectiveText = CreateText(canvas.transform, "ObjectiveText", new Vector2(18f, -54f), "Descubra o que aconteceu.", 22);
+            Text objectiveText = CreateText(gameplayHud.transform, "ObjectiveText", new Vector2(18f, -54f), "Descubra o que aconteceu.", 22);
             ObjectiveUI objectiveUI = objectiveText.gameObject.AddComponent<ObjectiveUI>();
             objectiveUI.Configure(objectiveSystem, objectiveText);
 
-            Text clueText = CreateText(canvas.transform, "ClueCounter", new Vector2(18f, -86f), "Pistas: 0", 20);
+            Text clueText = CreateText(gameplayHud.transform, "ClueCounter", new Vector2(18f, -86f), "Pistas: 0", 20);
             ClueCounterUI clueCounter = clueText.gameObject.AddComponent<ClueCounterUI>();
             clueCounter.Configure(clueSystem, clueText);
+
+            GameObject clueMessagePanel = CreateMessagePanel(gameplayHud.transform);
+            Text clueMessageText = clueMessagePanel.GetComponentInChildren<Text>();
+            ClueMessageUI clueMessageUI = clueMessagePanel.AddComponent<ClueMessageUI>();
+            clueMessageUI.Configure(clueMessageSystem, clueMessagePanel, clueMessageText);
+
+            splashPanel = CreateSplashPanel(canvas.transform);
+            menuPanel = CreateMenuPanel(canvas.transform, out playButton, out continueButton, out difficultyButton, out selectedDifficultyLabel);
+            difficultyPanel = CreateDifficultyPanel(canvas.transform, out easyButton, out normalButton, out hardButton, out insaneButton);
 
             gameOverPanel = CreatePanel(canvas.transform, "GameOverPanel", "Você se perdeu no mistério.\nPressione R para reiniciar.");
             gameOverPanel.SetActive(false);
@@ -463,10 +605,148 @@ namespace LendasDoQuintal.Editor
             return canvas;
         }
 
+        private static void CreateEventSystem()
+        {
+            GameObject eventSystem = new GameObject("EventSystem");
+            eventSystem.AddComponent<EventSystem>();
+            eventSystem.AddComponent<StandaloneInputModule>();
+        }
+
+        private static GameObject CreateUiRoot(Transform parent, string name)
+        {
+            GameObject root = new GameObject(name);
+            root.transform.SetParent(parent, false);
+
+            RectTransform rect = root.AddComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            return root;
+        }
+
+        private static GameObject CreateSplashPanel(Transform parent)
+        {
+            GameObject panel = CreateOverlay(parent, "SplashScreen", new Color32(7, 10, 18, 255));
+            Text title = CreateCenteredText(panel.transform, "Title", "Lendas do Quintal", new Vector2(0f, 80f), new Vector2(900f, 96f), 52);
+            title.color = new Color32(255, 181, 45, 255);
+            CreateCenteredText(panel.transform, "Subtitle", "O Sumiço da Vovó", new Vector2(0f, 16f), new Vector2(720f, 56f), 30);
+            CreateCenteredText(panel.transform, "Prompt", "Pressione qualquer tecla", new Vector2(0f, -96f), new Vector2(520f, 48f), 24);
+            return panel;
+        }
+
+        private static GameObject CreateMenuPanel(Transform parent, out Button playButton, out Button continueButton, out Button difficultyButton, out Text selectedDifficultyLabel)
+        {
+            GameObject panel = CreateOverlay(parent, "MainMenu", new Color(0.02f, 0.03f, 0.07f, 0.94f));
+            Text title = CreateCenteredText(panel.transform, "Title", "Lendas do Quintal", new Vector2(0f, 190f), new Vector2(900f, 82f), 46);
+            title.color = new Color32(255, 181, 45, 255);
+            selectedDifficultyLabel = CreateCenteredText(panel.transform, "SelectedDifficulty", "Dificuldade: Normal", new Vector2(0f, 116f), new Vector2(520f, 42f), 24);
+
+            playButton = CreateButton(panel.transform, "PlayButton", "Jogar", new Vector2(0f, 42f));
+            continueButton = CreateButton(panel.transform, "ContinueButton", "Continuar", new Vector2(0f, -26f));
+            difficultyButton = CreateButton(panel.transform, "DifficultyButton", "Dificuldade", new Vector2(0f, -94f));
+
+            return panel;
+        }
+
+        private static GameObject CreateDifficultyPanel(Transform parent, out Button easyButton, out Button normalButton, out Button hardButton, out Button insaneButton)
+        {
+            GameObject panel = CreateOverlay(parent, "DifficultyMenu", new Color(0.02f, 0.03f, 0.07f, 0.96f));
+            Text title = CreateCenteredText(panel.transform, "Title", "Selecione a dificuldade", new Vector2(0f, 170f), new Vector2(820f, 70f), 38);
+            title.color = new Color32(255, 181, 45, 255);
+
+            easyButton = CreateButton(panel.transform, "EasyButton", "Fácil", new Vector2(0f, 72f));
+            normalButton = CreateButton(panel.transform, "NormalButton", "Normal", new Vector2(0f, 4f));
+            hardButton = CreateButton(panel.transform, "HardButton", "Difícil", new Vector2(0f, -64f));
+            insaneButton = CreateButton(panel.transform, "InsaneButton", "Insano", new Vector2(0f, -132f));
+
+            return panel;
+        }
+
+        private static GameObject CreateMessagePanel(Transform parent)
+        {
+            GameObject panel = new GameObject("ClueMessagePanel");
+            panel.transform.SetParent(parent, false);
+
+            RectTransform rect = panel.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0f);
+            rect.anchorMax = new Vector2(0.5f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.anchoredPosition = new Vector2(0f, 34f);
+            rect.sizeDelta = new Vector2(960f, 104f);
+
+            Image image = panel.AddComponent<Image>();
+            image.color = new Color(0.02f, 0.02f, 0.03f, 0.82f);
+
+            Text text = CreateCenteredText(panel.transform, "Message", string.Empty, Vector2.zero, new Vector2(900f, 76f), 24);
+            text.alignment = TextAnchor.MiddleCenter;
+
+            return panel;
+        }
+
+        private static GameObject CreateOverlay(Transform parent, string name, Color color)
+        {
+            GameObject panel = CreateUiRoot(parent, name);
+            Image image = panel.AddComponent<Image>();
+            image.color = color;
+            return panel;
+        }
+
+        private static Text CreateCenteredText(Transform parent, string name, string value, Vector2 anchoredPosition, Vector2 size, int fontSize)
+        {
+            GameObject textObject = new GameObject(name);
+            textObject.transform.SetParent(parent, false);
+
+            RectTransform rect = textObject.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = size;
+
+            Text text = textObject.AddComponent<Text>();
+            text.text = value;
+            text.font = GetBuiltinUiFont();
+            text.fontSize = fontSize;
+            text.color = Color.white;
+            text.alignment = TextAnchor.MiddleCenter;
+
+            return text;
+        }
+
+        private static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition)
+        {
+            GameObject buttonObject = new GameObject(name);
+            buttonObject.transform.SetParent(parent, false);
+
+            RectTransform rect = buttonObject.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = new Vector2(360f, 52f);
+
+            Image image = buttonObject.AddComponent<Image>();
+            image.color = new Color32(244, 223, 164, 255);
+
+            Button button = buttonObject.AddComponent<Button>();
+            ColorBlock colors = button.colors;
+            colors.normalColor = new Color32(244, 223, 164, 255);
+            colors.highlightedColor = new Color32(255, 181, 45, 255);
+            colors.pressedColor = new Color32(202, 96, 31, 255);
+            button.colors = colors;
+
+            Text text = CreateCenteredText(buttonObject.transform, "Label", label, Vector2.zero, new Vector2(330f, 44f), 24);
+            text.color = new Color32(7, 10, 18, 255);
+
+            return button;
+        }
+
         private static Slider CreateSlider(Transform parent, string name, Vector2 anchoredPosition)
         {
             GameObject sliderObject = new GameObject(name);
-            sliderObject.transform.SetParent(parent);
+            sliderObject.transform.SetParent(parent, false);
 
             RectTransform rect = sliderObject.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0f, 1f);
@@ -481,7 +761,7 @@ namespace LendasDoQuintal.Editor
             slider.value = 5f;
 
             GameObject fill = new GameObject("Fill");
-            fill.transform.SetParent(sliderObject.transform);
+            fill.transform.SetParent(sliderObject.transform, false);
             Image fillImage = fill.AddComponent<Image>();
             fillImage.color = new Color32(218, 64, 64, 255);
             RectTransform fillRect = fill.GetComponent<RectTransform>();
@@ -497,7 +777,7 @@ namespace LendasDoQuintal.Editor
         private static Text CreateText(Transform parent, string name, Vector2 anchoredPosition, string value, int size)
         {
             GameObject textObject = new GameObject(name);
-            textObject.transform.SetParent(parent);
+            textObject.transform.SetParent(parent, false);
 
             RectTransform rect = textObject.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0f, 1f);
@@ -524,7 +804,7 @@ namespace LendasDoQuintal.Editor
         private static GameObject CreatePanel(Transform parent, string name, string message)
         {
             GameObject panel = new GameObject(name);
-            panel.transform.SetParent(parent);
+            panel.transform.SetParent(parent, false);
 
             RectTransform rect = panel.AddComponent<RectTransform>();
             rect.anchorMin = Vector2.zero;
@@ -551,17 +831,19 @@ namespace LendasDoQuintal.Editor
         {
             GameObject cameraObject = new GameObject("Main Camera");
             cameraObject.tag = "MainCamera";
+            cameraObject.transform.position = new Vector3(0f, 0f, -10f);
             UnityEngine.Camera camera = cameraObject.AddComponent<UnityEngine.Camera>();
             camera.orthographic = true;
-            camera.orthographicSize = 4.5f;
-            camera.backgroundColor = new Color32(18, 24, 42, 255);
+            camera.orthographicSize = CameraOrthographicSize;
+            camera.aspect = TargetAspect;
+            camera.backgroundColor = new Color32(7, 10, 18, 255);
             cameraObject.AddComponent<AudioListener>();
 
             CameraFollow2D follow = cameraObject.AddComponent<CameraFollow2D>();
-            follow.Configure(player);
+            follow.Configure(player, new Vector2(0f, 0f), new Vector2(20f, 0f), new Vector3(4.4f, 1.4f, -10f), CameraOrthographicSize, TargetAspect);
         }
 
-        private static void CreateSaciEncounter(Sprite sprite, ObjectiveSystem objectiveSystem, GameFlowController gameFlow)
+        private static GameObject CreateSaciEncounter(Sprite sprite, ObjectiveSystem objectiveSystem, GameFlowController gameFlow)
         {
             GameObject trigger = new GameObject("SaciEncounter");
             trigger.transform.position = new Vector3(24f, -0.5f, 0f);
@@ -580,6 +862,8 @@ namespace LendasDoQuintal.Editor
 
             SaciEncounter encounter = trigger.AddComponent<SaciEncounter>();
             encounter.Configure(objectiveSystem, gameFlow, visual);
+
+            return trigger;
         }
 
         private static Transform CreateChild(Transform parent, string name, Vector3 localPosition)
@@ -615,7 +899,8 @@ namespace LendasDoQuintal.Editor
         Clue,
         Ground,
         House,
-        Saci
+        Saci,
+        Background
     }
 
     internal static class Palette

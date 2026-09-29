@@ -14,10 +14,7 @@ namespace LendasDoQuintal.Systems
 
         private void OnEnable()
         {
-            if (playerHealth != null)
-            {
-                playerHealth.Died += OnPlayerDied;
-            }
+            Subscribe();
         }
 
         private void Update()
@@ -58,9 +55,25 @@ namespace LendasDoQuintal.Systems
 
         public void Configure(Health newPlayerHealth, GameObject newGameOverPanel, GameObject newPrototypeEndPanel)
         {
+            if (playerHealth != null)
+            {
+                playerHealth.Died -= OnPlayerDied;
+            }
+
             playerHealth = newPlayerHealth;
             gameOverPanel = newGameOverPanel;
             prototypeEndPanel = newPrototypeEndPanel;
+            ended = false;
+            Subscribe();
+        }
+
+        private void Subscribe()
+        {
+            if (playerHealth != null)
+            {
+                playerHealth.Died -= OnPlayerDied;
+                playerHealth.Died += OnPlayerDied;
+            }
         }
     }
 }

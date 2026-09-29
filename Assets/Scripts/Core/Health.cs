@@ -57,5 +57,12 @@ namespace LendasDoQuintal.Core
             CurrentHealth = maxHealth;
             Changed?.Invoke(CurrentHealth, maxHealth);
         }
+
+        public void SetMaxHealth(int value, bool restoreHealth = true)
+        {
+            maxHealth = Mathf.Max(1, value);
+            CurrentHealth = restoreHealth ? maxHealth : Mathf.Min(CurrentHealth, maxHealth);
+            Changed?.Invoke(CurrentHealth, maxHealth);
+        }
     }
 }

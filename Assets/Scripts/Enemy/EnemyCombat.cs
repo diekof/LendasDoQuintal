@@ -23,5 +23,10 @@ namespace LendasDoQuintal.Enemy
                 nextHitTime = Time.time + hitCooldown;
             }
         }
+
+        public void SetContactDamage(int value)
+        {
+            contactDamage = Mathf.Max(1, value);
+        }
     }
 }

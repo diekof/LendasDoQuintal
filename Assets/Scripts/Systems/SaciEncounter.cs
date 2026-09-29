@@ -1,4 +1,5 @@
 using UnityEngine;
+using LendasDoQuintal.Player;
 
 namespace LendasDoQuintal.Systems
 {
@@ -26,7 +27,37 @@ namespace LendasDoQuintal.Systems
             }
 
             objectiveSystem?.SetSaciObjective();
+            DropPlayer(other.gameObject);
             Invoke(nameof(EndPrototype), endDelay);
+        }
+
+        private static void DropPlayer(GameObject player)
+        {
+            if (player.TryGetComponent(out PlayerPlatformMovement movement))
+            {
+                movement.enabled = false;
+            }
+
+            if (player.TryGetComponent(out PlayerCombat combat))
+            {
+                combat.enabled = false;
+            }
+
+            if (player.TryGetComponent(out PlayerInteraction interaction))
+            {
+                interaction.enabled = false;
+            }
+
+            if (player.TryGetComponent(out Rigidbody2D rb))
+            {
+                rb.linearVelocity = new Vector2(1.5f, -8f);
+                rb.gravityScale = 4.5f;
+            }
+
+            foreach (Collider2D collider in player.GetComponents<Collider2D>())
+            {
+                collider.enabled = false;
+            }
         }
 
         private void EndPrototype()

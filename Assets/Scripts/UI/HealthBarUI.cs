@@ -11,11 +11,7 @@ namespace LendasDoQuintal.UI
 
         private void OnEnable()
         {
-            if (targetHealth != null)
-            {
-                targetHealth.Changed += UpdateValue;
-                UpdateValue(targetHealth.CurrentHealth, targetHealth.MaxHealth);
-            }
+            Subscribe();
         }
 
         private void OnDisable()
@@ -39,8 +35,24 @@ namespace LendasDoQuintal.UI
 
         public void Configure(Health newTargetHealth, Slider newSlider)
         {
+            if (targetHealth != null)
+            {
+                targetHealth.Changed -= UpdateValue;
+            }
+
             targetHealth = newTargetHealth;
             slider = newSlider;
+            Subscribe();
+        }
+
+        private void Subscribe()
+        {
+            if (targetHealth != null)
+            {
+                targetHealth.Changed -= UpdateValue;
+                targetHealth.Changed += UpdateValue;
+                UpdateValue(targetHealth.CurrentHealth, targetHealth.MaxHealth);
+            }
         }
     }
 }

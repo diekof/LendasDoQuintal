@@ -9,6 +9,7 @@ namespace LendasDoQuintal.Systems
         [SerializeField] private string clueId;
         [SerializeField] private string message = "Tem algo estranho aqui.";
         [SerializeField] private ClueSystem clueSystem;
+        [SerializeField] private ClueMessageSystem messageSystem;
 
         public string Prompt => prompt;
 
@@ -19,6 +20,11 @@ namespace LendasDoQuintal.Systems
                 clueSystem.RegisterClue(clueId);
             }
 
+            if (messageSystem != null)
+            {
+                messageSystem.Show(message);
+            }
+
             Debug.Log(message);
         }
 
@@ -27,6 +33,12 @@ namespace LendasDoQuintal.Systems
             clueSystem = newClueSystem;
             clueId = newClueId;
             message = newMessage;
+        }
+
+        public void Configure(ClueSystem newClueSystem, ClueMessageSystem newMessageSystem, string newClueId, string newMessage)
+        {
+            Configure(newClueSystem, newClueId, newMessage);
+            messageSystem = newMessageSystem;
         }
     }
 }

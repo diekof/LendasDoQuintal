@@ -28,6 +28,9 @@ Este guia parte da imagem de referência enviada pelo usuário, usando-a apenas 
 
 - `Assets/Editor/MvpSceneBuilder.cs` gera sprites placeholder seguindo esta paleta.
 - `Assets/Art/Concept/lendas_quintal_key_art_reference.png` serve como referência visual do clima.
+- `Assets/Art/Backgrounds/Phase1_Backyard_Background_Wide.png` é o fundo largo da fase 1, derivado do PixelLab para reduzir repetição durante o avanço da câmera.
 - `Assets/Art/Characters/Hero/hero_idle_side_64.png` é o primeiro sprite real do herói gerado com PixelLab.
 - `Assets/Art/Characters/Hero/Walk/` contém os frames de caminhada do herói gerados com PixelLab.
+- `Assets/Art/Characters/Hero/Attack/` e `Assets/Art/Characters/Hero/Jump/` contêm os primeiros frames de soco e pulo.
+- `Assets/Art/Effects/Impact/` contém o efeito de impacto do soco.
 - A arte ainda é placeholder; o objetivo agora é validar direção, legibilidade e atmosfera.
