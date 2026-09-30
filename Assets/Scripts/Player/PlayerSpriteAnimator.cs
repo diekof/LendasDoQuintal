@@ -14,10 +14,12 @@ namespace LendasDoQuintal.Player
         [SerializeField] private Sprite[] jumpSprites;
         [SerializeField] private float walkFrameRate = 10f;
         [SerializeField] private float attackFrameRate = 16f;
-        [SerializeField] private float jumpFrameRate = 8f;
+        [SerializeField] private float landingDuration = 0.14f;
 
         private float frameTimer;
+        private float landingTimer;
         private int frameIndex;
+        private bool wasGrounded = true;
         private AnimationState currentState = AnimationState.Idle;
 
         private void Awake()
@@ -53,12 +55,29 @@ namespace LendasDoQuintal.Player
             if (combat != null && combat.IsAttacking && HasFrames(attackSprites))
             {
                 Play(AnimationState.Attack, attackSprites, attackFrameRate, false);
+                wasGrounded = movement.IsGrounded;
                 return;
             }
 
             if (!movement.IsGrounded && HasFrames(jumpSprites))
             {
-                Play(AnimationState.Jump, jumpSprites, jumpFrameRate, false);
+                PlayAirborne();
+                wasGrounded = false;
+                return;
+            }
+
+            if (!wasGrounded && movement.IsGrounded)
+            {
+                landingTimer = landingDuration;
+            }
+
+            wasGrounded = movement.IsGrounded;
+
+            if (landingTimer > 0f && HasFrames(jumpSprites))
+            {
+                landingTimer -= Time.deltaTime;
+                SetState(AnimationState.Land);
+                spriteRenderer.sprite = jumpSprites[jumpSprites.Length - 1];
                 return;
             }
 
@@ -74,6 +93,20 @@ namespace LendasDoQuintal.Player
             }
 
             Play(AnimationState.Walk, walkSprites, walkFrameRate, true);
+        }
+
+        private void PlayAirborne()
+        {
+            SetState(AnimationState.Jump);
+
+            if (jumpSprites.Length == 1)
+            {
+                spriteRenderer.sprite = jumpSprites[0];
+                return;
+            }
+
+            bool rising = movement.VerticalVelocity > 0.15f;
+            spriteRenderer.sprite = rising ? jumpSprites[0] : jumpSprites[jumpSprites.Length - 1];
         }
 
         private void Play(AnimationState state, Sprite[] sprites, float frameRate, bool loop)
@@ -141,7 +174,8 @@ namespace LendasDoQuintal.Player
             Idle,
             Walk,
             Attack,
-            Jump
+            Jump,
+            Land
         }
     }
 }

@@ -24,6 +24,7 @@ namespace LendasDoQuintal.Editor
         private const string HeroAttackPath = "Assets/Art/Characters/Hero/Attack";
         private const string HeroJumpPath = "Assets/Art/Characters/Hero/Jump";
         private const string ImpactPath = "Assets/Art/Effects/Impact";
+        private const string LoadingArtPath = "Assets/Art/Title/lendas_quintal_title_key_art_pixel.png";
         private const float TargetAspect = 16f / 9f;
         private const float CameraOrthographicSize = 5.4f;
         private const float BackgroundPixelsPerUnit = 20f;
@@ -84,6 +85,7 @@ namespace LendasDoQuintal.Editor
                 out Button playButton,
                 out Button continueButton,
                 out Button difficultyButton,
+                out Button quitButton,
                 out Button easyButton,
                 out Button normalButton,
                 out Button hardButton,
@@ -106,6 +108,7 @@ namespace LendasDoQuintal.Editor
                 playButton,
                 continueButton,
                 difficultyButton,
+                quitButton,
                 easyButton,
                 normalButton,
                 hardButton,
@@ -138,10 +141,14 @@ namespace LendasDoQuintal.Editor
             CreateFolder("Assets", "Generated");
             CreateFolder("Assets", "Prefabs");
             CreateFolder("Assets/Art", "Backgrounds");
+            CreateFolder("Assets/Art", "Title");
             CreateFolder("Assets/Art/Characters/Hero", "Attack");
             CreateFolder("Assets/Art/Characters/Hero", "Jump");
             CreateFolder("Assets/Art", "Effects");
             CreateFolder("Assets/Art/Effects", "Impact");
+            CreateFolder("Assets", "Resources");
+            CreateFolder("Assets/Resources", "UI");
+            CreateFolder("Assets/Resources/UI", "Loading");
         }
 
         private static void CreateFolder(string parent, string child)
@@ -425,9 +432,8 @@ namespace LendasDoQuintal.Editor
         {
             GameObject environment = new GameObject("Environment");
 
-            CreateBlock("Casa_Piso", groundSprite, new Vector3(0f, -3f, 0f), new Vector3(12f, 1f, 1f), environment.transform);
+            CreateBlock("Casa_Piso", groundSprite, new Vector3(0f, -3f, 0f), new Vector3(14f, 0.8f, 1f), environment.transform);
             CreateBlock("Quintal_Chao", groundSprite, new Vector3(14f, -3f, 0f), new Vector3(22f, 1f, 1f), environment.transform);
-            CreateBlock("Parede_Casa", houseSprite, new Vector3(0f, 0f, 1f), new Vector3(12f, 5f, 1f), environment.transform, false);
             CreateBlock("Mesa_Obstaculo", houseSprite, new Vector3(-2f, -1.9f, 0f), new Vector3(1.5f, 0.5f, 1f), environment.transform);
             CreateBlock("Plataforma_Poco", groundSprite, new Vector3(8f, -1.5f, 0f), new Vector3(3f, 0.45f, 1f), environment.transform);
             CreateBlock("Plataforma_Galinheiro", groundSprite, new Vector3(15f, -0.6f, 0f), new Vector3(3.2f, 0.45f, 1f), environment.transform);
@@ -558,6 +564,7 @@ namespace LendasDoQuintal.Editor
             out Button playButton,
             out Button continueButton,
             out Button difficultyButton,
+            out Button quitButton,
             out Button easyButton,
             out Button normalButton,
             out Button hardButton,
@@ -593,7 +600,7 @@ namespace LendasDoQuintal.Editor
             clueMessageUI.Configure(clueMessageSystem, clueMessagePanel, clueMessageText);
 
             splashPanel = CreateSplashPanel(canvas.transform);
-            menuPanel = CreateMenuPanel(canvas.transform, out playButton, out continueButton, out difficultyButton, out selectedDifficultyLabel);
+            menuPanel = CreateMenuPanel(canvas.transform, out playButton, out continueButton, out difficultyButton, out quitButton, out selectedDifficultyLabel);
             difficultyPanel = CreateDifficultyPanel(canvas.transform, out easyButton, out normalButton, out hardButton, out insaneButton);
 
             gameOverPanel = CreatePanel(canvas.transform, "GameOverPanel", "Você se perdeu no mistério.\nPressione R para reiniciar.");
@@ -629,37 +636,73 @@ namespace LendasDoQuintal.Editor
         private static GameObject CreateSplashPanel(Transform parent)
         {
             GameObject panel = CreateOverlay(parent, "SplashScreen", new Color32(7, 10, 18, 255));
-            Text title = CreateCenteredText(panel.transform, "Title", "Lendas do Quintal", new Vector2(0f, 80f), new Vector2(900f, 96f), 52);
-            title.color = new Color32(255, 181, 45, 255);
-            CreateCenteredText(panel.transform, "Subtitle", "O Sumiço da Vovó", new Vector2(0f, 16f), new Vector2(720f, 56f), 30);
-            CreateCenteredText(panel.transform, "Prompt", "Pressione qualquer tecla", new Vector2(0f, -96f), new Vector2(520f, 48f), 24);
+            Sprite loadingArt = LoadProjectSprite(LoadingArtPath, 100f);
+            if (loadingArt != null)
+            {
+                CreateFullScreenImage(panel.transform, "LoadingKeyArt", loadingArt);
+                Text prompt = CreateCenteredText(panel.transform, "Prompt", "Pressione qualquer tecla", new Vector2(0f, 36f), new Vector2(620f, 56f), 26);
+                RectTransform promptRect = prompt.GetComponent<RectTransform>();
+                promptRect.anchorMin = new Vector2(0.5f, 0f);
+                promptRect.anchorMax = new Vector2(0.5f, 0f);
+                promptRect.pivot = new Vector2(0.5f, 0f);
+                prompt.color = Color.white;
+                AddTextOutline(prompt);
+            }
+            else
+            {
+                Text title = CreateCenteredText(panel.transform, "Title", "Lendas do Quintal", new Vector2(0f, 80f), new Vector2(900f, 96f), 52);
+                title.color = new Color32(255, 181, 45, 255);
+                CreateCenteredText(panel.transform, "Subtitle", "O Sumiço da Vovó", new Vector2(0f, 16f), new Vector2(720f, 56f), 30);
+                CreateCenteredText(panel.transform, "Prompt", "Pressione qualquer tecla", new Vector2(0f, -96f), new Vector2(520f, 48f), 24);
+            }
             return panel;
         }
 
-        private static GameObject CreateMenuPanel(Transform parent, out Button playButton, out Button continueButton, out Button difficultyButton, out Text selectedDifficultyLabel)
+        private static GameObject CreateMenuPanel(Transform parent, out Button playButton, out Button continueButton, out Button difficultyButton, out Button quitButton, out Text selectedDifficultyLabel)
         {
-            GameObject panel = CreateOverlay(parent, "MainMenu", new Color(0.02f, 0.03f, 0.07f, 0.94f));
-            Text title = CreateCenteredText(panel.transform, "Title", "Lendas do Quintal", new Vector2(0f, 190f), new Vector2(900f, 82f), 46);
-            title.color = new Color32(255, 181, 45, 255);
-            selectedDifficultyLabel = CreateCenteredText(panel.transform, "SelectedDifficulty", "Dificuldade: Normal", new Vector2(0f, 116f), new Vector2(520f, 42f), 24);
+            GameObject panel = CreateOverlay(parent, "MainMenu", Color.clear);
+            Sprite loadingArt = LoadProjectSprite(LoadingArtPath, 100f);
+            if (loadingArt != null)
+            {
+                CreateFullScreenImage(panel.transform, "MenuKeyArt", loadingArt);
+                CreateFullScreenShade(panel.transform, "MenuShade", new Color(0f, 0f, 0f, 0.22f));
+            }
+            else
+            {
+                Text title = CreateCenteredText(panel.transform, "Title", "Lendas do Quintal", new Vector2(0f, 190f), new Vector2(900f, 82f), 46);
+                title.color = new Color32(255, 181, 45, 255);
+            }
 
-            playButton = CreateButton(panel.transform, "PlayButton", "Jogar", new Vector2(0f, 42f));
-            continueButton = CreateButton(panel.transform, "ContinueButton", "Continuar", new Vector2(0f, -26f));
-            difficultyButton = CreateButton(panel.transform, "DifficultyButton", "Dificuldade", new Vector2(0f, -94f));
+            selectedDifficultyLabel = CreateCenteredText(panel.transform, "SelectedDifficulty", "Dificuldade: Normal", new Vector2(0f, -118f), new Vector2(520f, 42f), 24);
+            selectedDifficultyLabel.color = new Color32(244, 223, 164, 255);
+            AddTextOutline(selectedDifficultyLabel);
+
+            playButton = CreateButton(panel.transform, "PlayButton", "Jogar", new Vector2(0f, -182f));
+            continueButton = CreateButton(panel.transform, "ContinueButton", "Continuar", new Vector2(0f, -244f));
+            difficultyButton = CreateButton(panel.transform, "DifficultyButton", "Dificuldade", new Vector2(0f, -306f));
+            quitButton = CreateButton(panel.transform, "QuitButton", "Sair", new Vector2(0f, -368f));
 
             return panel;
         }
 
         private static GameObject CreateDifficultyPanel(Transform parent, out Button easyButton, out Button normalButton, out Button hardButton, out Button insaneButton)
         {
-            GameObject panel = CreateOverlay(parent, "DifficultyMenu", new Color(0.02f, 0.03f, 0.07f, 0.96f));
-            Text title = CreateCenteredText(panel.transform, "Title", "Selecione a dificuldade", new Vector2(0f, 170f), new Vector2(820f, 70f), 38);
-            title.color = new Color32(255, 181, 45, 255);
+            GameObject panel = CreateOverlay(parent, "DifficultyMenu", Color.clear);
+            Sprite loadingArt = LoadProjectSprite(LoadingArtPath, 100f);
+            if (loadingArt != null)
+            {
+                CreateFullScreenImage(panel.transform, "DifficultyKeyArt", loadingArt);
+                CreateFullScreenShade(panel.transform, "DifficultyShade", new Color(0f, 0f, 0f, 0.34f));
+            }
 
-            easyButton = CreateButton(panel.transform, "EasyButton", "Fácil", new Vector2(0f, 72f));
-            normalButton = CreateButton(panel.transform, "NormalButton", "Normal", new Vector2(0f, 4f));
-            hardButton = CreateButton(panel.transform, "HardButton", "Difícil", new Vector2(0f, -64f));
-            insaneButton = CreateButton(panel.transform, "InsaneButton", "Insano", new Vector2(0f, -132f));
+            Text title = CreateCenteredText(panel.transform, "Title", "Selecione a dificuldade", new Vector2(0f, -104f), new Vector2(760f, 54f), 32);
+            title.color = new Color32(244, 223, 164, 255);
+            AddTextOutline(title);
+
+            easyButton = CreateButton(panel.transform, "EasyButton", "Fácil", new Vector2(0f, -178f));
+            normalButton = CreateButton(panel.transform, "NormalButton", "Normal", new Vector2(0f, -240f));
+            hardButton = CreateButton(panel.transform, "HardButton", "Difícil", new Vector2(0f, -302f));
+            insaneButton = CreateButton(panel.transform, "InsaneButton", "Insano", new Vector2(0f, -364f));
 
             return panel;
         }
@@ -693,6 +736,43 @@ namespace LendasDoQuintal.Editor
             return panel;
         }
 
+        private static Image CreateFullScreenImage(Transform parent, string name, Sprite sprite)
+        {
+            GameObject imageObject = new GameObject(name);
+            imageObject.transform.SetParent(parent, false);
+            imageObject.transform.SetAsFirstSibling();
+
+            RectTransform rect = imageObject.AddComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            Image image = imageObject.AddComponent<Image>();
+            image.sprite = sprite;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            return image;
+        }
+
+        private static Image CreateFullScreenShade(Transform parent, string name, Color color)
+        {
+            GameObject shadeObject = new GameObject(name);
+            shadeObject.transform.SetParent(parent, false);
+            shadeObject.transform.SetSiblingIndex(1);
+
+            RectTransform rect = shadeObject.AddComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            Image image = shadeObject.AddComponent<Image>();
+            image.color = color;
+            image.raycastTarget = false;
+            return image;
+        }
+
         private static Text CreateCenteredText(Transform parent, string name, string value, Vector2 anchoredPosition, Vector2 size, int fontSize)
         {
             GameObject textObject = new GameObject(name);
@@ -715,6 +795,13 @@ namespace LendasDoQuintal.Editor
             return text;
         }
 
+        private static void AddTextOutline(Text text)
+        {
+            Outline outline = text.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0f, 0f, 0f, 0.85f);
+            outline.effectDistance = new Vector2(2f, -2f);
+        }
+
         private static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition)
         {
             GameObject buttonObject = new GameObject(name);
@@ -725,17 +812,22 @@ namespace LendasDoQuintal.Editor
             rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = anchoredPosition;
-            rect.sizeDelta = new Vector2(360f, 52f);
+            rect.sizeDelta = new Vector2(370f, 54f);
 
             Image image = buttonObject.AddComponent<Image>();
-            image.color = new Color32(244, 223, 164, 255);
+            image.color = new Color32(244, 223, 164, 245);
 
             Button button = buttonObject.AddComponent<Button>();
             ColorBlock colors = button.colors;
-            colors.normalColor = new Color32(244, 223, 164, 255);
+            colors.normalColor = new Color32(244, 223, 164, 245);
             colors.highlightedColor = new Color32(255, 181, 45, 255);
             colors.pressedColor = new Color32(202, 96, 31, 255);
+            colors.selectedColor = new Color32(255, 181, 45, 255);
             button.colors = colors;
+
+            Outline outline = buttonObject.AddComponent<Outline>();
+            outline.effectColor = new Color32(7, 10, 18, 255);
+            outline.effectDistance = new Vector2(3f, -3f);
 
             Text text = CreateCenteredText(buttonObject.transform, "Label", label, Vector2.zero, new Vector2(330f, 44f), 24);
             text.color = new Color32(7, 10, 18, 255);

@@ -8,4 +8,5 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/LendasDoQuintal_MVP.unity
     guid: 343568aca1b9e7145868e17145f2edc1
-  m_configObjects: {}
+  m_configObjects:
+    com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
