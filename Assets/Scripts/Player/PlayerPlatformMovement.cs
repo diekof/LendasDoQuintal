@@ -19,8 +19,11 @@ namespace LendasDoQuintal.Player
         [SerializeField] private float jumpBuffer = 0.1f;
         [SerializeField] private float minimumX = -5.5f;
         [SerializeField] private float fallRecoveryY = -8f;
+        [SerializeField, Range(0f, 1f)] private float jumpVolume = 0.48f;
+        [SerializeField, Range(0f, 1f)] private float landingVolume = 0.42f;
 
         private Rigidbody2D rb;
+        private AudioSource audioSource;
         private Collider2D[] ownColliders;
         private readonly Collider2D[] groundHits = new Collider2D[8];
         private ContactFilter2D groundFilter;
@@ -28,6 +31,9 @@ namespace LendasDoQuintal.Player
         private float coyoteCounter;
         private float jumpBufferCounter;
         private Vector3 spawnPosition;
+        private bool hasLeftGround;
+        private static AudioClip jumpClip;
+        private static AudioClip landingClip;
 
         public bool IsGrounded { get; private set; }
         public float HorizontalInput => horizontalInput;
@@ -36,6 +42,14 @@ namespace LendasDoQuintal.Player
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+            }
+
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0f;
             ownColliders = GetComponents<Collider2D>();
             spawnPosition = transform.position;
         }
@@ -44,7 +58,19 @@ namespace LendasDoQuintal.Player
         {
             horizontalInput = InputReader.MoveX();
 
+            bool wasGrounded = IsGrounded;
+            float verticalVelocityBeforeGroundCheck = rb.linearVelocity.y;
             IsGrounded = CheckGrounded();
+
+            if (!IsGrounded)
+            {
+                hasLeftGround = true;
+            }
+            else if (!wasGrounded && hasLeftGround)
+            {
+                PlayLanding(verticalVelocityBeforeGroundCheck);
+                hasLeftGround = false;
+            }
 
             coyoteCounter = IsGrounded ? coyoteTime : coyoteCounter - Time.deltaTime;
             jumpBufferCounter = InputReader.JumpPressed() ? jumpBuffer : jumpBufferCounter - Time.deltaTime;
@@ -52,6 +78,8 @@ namespace LendasDoQuintal.Player
             if (jumpBufferCounter > 0f && coyoteCounter > 0f)
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+                PlayJump();
+                hasLeftGround = true;
                 jumpBufferCounter = 0f;
                 coyoteCounter = 0f;
             }
@@ -146,6 +174,39 @@ namespace LendasDoQuintal.Player
 
             transform.position = spawnPosition;
             rb.linearVelocity = Vector2.zero;
+        }
+
+        private void PlayJump()
+        {
+            PlayOneShot(JumpClip(), jumpVolume);
+        }
+
+        private void PlayLanding(float landingVelocity)
+        {
+            float intensity = Mathf.InverseLerp(0f, -10f, landingVelocity);
+            PlayOneShot(LandingClip(), landingVolume * Mathf.Lerp(0.55f, 1f, intensity));
+        }
+
+        private void PlayOneShot(AudioClip clip, float volume)
+        {
+            if (audioSource != null && clip != null && volume > 0f)
+            {
+                audioSource.PlayOneShot(clip, volume);
+            }
+        }
+
+        private static AudioClip JumpClip()
+        {
+            return jumpClip != null
+                ? jumpClip
+                : jumpClip = ProceduralSfx.CreateSweep("HeroJump", 420f, 780f, 0.12f, 0.32f);
+        }
+
+        private static AudioClip LandingClip()
+        {
+            return landingClip != null
+                ? landingClip
+                : landingClip = ProceduralSfx.CreateThump("HeroLanding", 0.14f, 0.36f);
         }
     }
 }

@@ -13,11 +13,28 @@ namespace LendasDoQuintal.Player
         [SerializeField] private LayerMask enemyMask = ~0;
         [SerializeField] private Sprite[] impactSprites;
         [SerializeField] private float impactFrameRate = 18f;
+        [SerializeField, Range(0f, 1f)] private float emptyPunchVolume = 0.38f;
+        [SerializeField, Range(0f, 1f)] private float hitPunchVolume = 0.58f;
 
+        private AudioSource audioSource;
         private float nextAttackTime;
         private float attackAnimationTimer;
+        private static AudioClip emptyPunchClip;
+        private static AudioClip hitPunchClip;
 
         public bool IsAttacking => attackAnimationTimer > 0f;
+
+        private void Awake()
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+            }
+
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0f;
+        }
 
         private void Update()
         {
@@ -36,9 +53,11 @@ namespace LendasDoQuintal.Player
 
             if (attackPoint == null)
             {
+                PlayEmptyPunch();
                 return;
             }
 
+            bool hitEnemy = false;
             Collider2D[] hits = Physics2D.OverlapCircleAll(attackPoint.position, attackRadius, enemyMask);
             foreach (Collider2D hit in hits)
             {
@@ -51,7 +70,17 @@ namespace LendasDoQuintal.Player
                 {
                     health.TakeDamage(damage);
                     SpawnImpact(hit.transform.position);
+                    hitEnemy = true;
                 }
+            }
+
+            if (hitEnemy)
+            {
+                PlayHitPunch();
+            }
+            else
+            {
+                PlayEmptyPunch();
             }
         }
 
@@ -84,6 +113,38 @@ namespace LendasDoQuintal.Player
         {
             Configure(newAttackPoint, newEnemyMask);
             impactSprites = newImpactSprites;
+        }
+
+        private void PlayEmptyPunch()
+        {
+            PlayOneShot(EmptyPunchClip(), emptyPunchVolume);
+        }
+
+        private void PlayHitPunch()
+        {
+            PlayOneShot(HitPunchClip(), hitPunchVolume);
+        }
+
+        private void PlayOneShot(AudioClip clip, float volume)
+        {
+            if (audioSource != null && clip != null && volume > 0f)
+            {
+                audioSource.PlayOneShot(clip, volume);
+            }
+        }
+
+        private static AudioClip EmptyPunchClip()
+        {
+            return emptyPunchClip != null
+                ? emptyPunchClip
+                : emptyPunchClip = ProceduralSfx.CreatePunch("HeroPunchEmpty", 0.09f, 0.28f, impact: false);
+        }
+
+        private static AudioClip HitPunchClip()
+        {
+            return hitPunchClip != null
+                ? hitPunchClip
+                : hitPunchClip = ProceduralSfx.CreatePunch("HeroPunchHit", 0.12f, 0.42f, impact: true);
         }
     }
 }

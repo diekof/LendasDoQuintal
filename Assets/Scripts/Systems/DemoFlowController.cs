@@ -27,6 +27,7 @@ namespace LendasDoQuintal.Systems
         [SerializeField] private EnemyPatrol[] enemyPatrols;
         [SerializeField] private EnemyCombat[] enemyCombats;
         [SerializeField] private MonoBehaviour[] gameplayControllers;
+        [SerializeField] private GameplayMusicProximity gameplayMusic;
         [Header("Audio")]
         [SerializeField] private AudioSource musicSource;
         [SerializeField] private AudioClip menuMusic;
@@ -41,6 +42,7 @@ namespace LendasDoQuintal.Systems
             EnsureEventSystem();
             EnsureMenuMusic();
             WireButtons();
+            EnsureGameplayMusic();
             EnsureSplashKeyArt();
             EnsureMenuPresentation();
             EnsureDifficultyPresentation();
@@ -123,6 +125,7 @@ namespace LendasDoQuintal.Systems
             SetActive(menuPanel, false);
             SetActive(difficultyPanel, false);
             SetActive(gameplayHud, false);
+            SetGameplayMusicEnabled(false);
             PlayMenuMusic();
         }
 
@@ -240,6 +243,7 @@ namespace LendasDoQuintal.Systems
             SetActive(menuPanel, true);
             SetActive(difficultyPanel, false);
             SetActive(gameplayHud, false);
+            SetGameplayMusicEnabled(false);
             UpdateDifficultyLabel();
             PlayMenuMusic();
         }
@@ -496,6 +500,7 @@ namespace LendasDoQuintal.Systems
             SetActive(gameplayHud, true);
             SetGameplayEnabled(true);
             StopMenuMusic();
+            SetGameplayMusicEnabled(true);
             Time.timeScale = 1f;
         }
 
@@ -557,6 +562,46 @@ namespace LendasDoQuintal.Systems
                     controller.enabled = enabled;
                 }
             }
+        }
+
+        private void EnsureGameplayMusic()
+        {
+            if (gameplayMusic != null)
+            {
+                return;
+            }
+
+            Transform playerTransform = FindPlayerTransform();
+            SaciEncounter saciEncounter = FindAnyObjectByType<SaciEncounter>();
+            if (playerTransform == null || saciEncounter == null)
+            {
+                return;
+            }
+
+            gameplayMusic = GetComponent<GameplayMusicProximity>();
+            if (gameplayMusic == null)
+            {
+                gameplayMusic = gameObject.AddComponent<GameplayMusicProximity>();
+            }
+
+            gameplayMusic.Configure(playerTransform, saciEncounter.transform);
+            gameplayMusic.enabled = false;
+        }
+
+        private void SetGameplayMusicEnabled(bool enabled)
+        {
+            EnsureGameplayMusic();
+
+            if (gameplayMusic != null)
+            {
+                gameplayMusic.enabled = enabled;
+            }
+        }
+
+        private static Transform FindPlayerTransform()
+        {
+            GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+            return playerObject != null ? playerObject.transform : null;
         }
 
         private void UpdateDifficultyLabel()

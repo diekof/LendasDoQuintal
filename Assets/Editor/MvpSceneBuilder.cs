@@ -98,6 +98,9 @@ namespace LendasDoQuintal.Editor
 
             CreateCamera(player.transform);
             GameObject saciEncounter = CreateSaciEncounter(saciSprite, objectiveSystem, gameFlow);
+            GameplayMusicProximity gameplayMusic = systems.AddComponent<GameplayMusicProximity>();
+            gameplayMusic.Configure(player.transform, saciEncounter.transform);
+            gameplayMusic.enabled = false;
 
             DemoFlowController demoFlow = systems.AddComponent<DemoFlowController>();
             demoFlow.Configure(
@@ -124,7 +127,8 @@ namespace LendasDoQuintal.Editor
                     player.GetComponent<PlayerInteraction>(),
                     enemy.GetComponent<EnemyPatrol>(),
                     enemy.GetComponent<EnemyCombat>(),
-                    saciEncounter.GetComponent<SaciEncounter>()
+                    saciEncounter.GetComponent<SaciEncounter>(),
+                    gameplayMusic
                 });
 
             EditorSceneManager.SaveScene(scene, ScenePath);
