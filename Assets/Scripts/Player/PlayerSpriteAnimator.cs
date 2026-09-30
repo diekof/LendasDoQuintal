@@ -12,8 +12,10 @@ namespace LendasDoQuintal.Player
         [SerializeField] private Sprite[] walkSprites;
         [SerializeField] private Sprite[] attackSprites;
         [SerializeField] private Sprite[] jumpSprites;
+        [SerializeField] private Sprite[] rollSprites;
         [SerializeField] private float walkFrameRate = 10f;
         [SerializeField] private float attackFrameRate = 16f;
+        [SerializeField] private float rollFrameRate = 18f;
         [SerializeField] private float landingDuration = 0.14f;
 
         private float frameTimer;
@@ -49,6 +51,13 @@ namespace LendasDoQuintal.Player
         {
             if (spriteRenderer == null || movement == null)
             {
+                return;
+            }
+
+            if (movement.IsRolling && HasFrames(rollSprites))
+            {
+                Play(AnimationState.Roll, rollSprites, rollFrameRate, false);
+                wasGrounded = movement.IsGrounded;
                 return;
             }
 
@@ -158,7 +167,8 @@ namespace LendasDoQuintal.Player
             Sprite newIdleSprite,
             Sprite[] newWalkSprites,
             Sprite[] newAttackSprites,
-            Sprite[] newJumpSprites)
+            Sprite[] newJumpSprites,
+            Sprite[] newRollSprites)
         {
             movement = newMovement;
             combat = newCombat;
@@ -167,6 +177,7 @@ namespace LendasDoQuintal.Player
             walkSprites = newWalkSprites;
             attackSprites = newAttackSprites;
             jumpSprites = newJumpSprites;
+            rollSprites = newRollSprites;
         }
 
         private enum AnimationState
@@ -175,7 +186,8 @@ namespace LendasDoQuintal.Player
             Walk,
             Attack,
             Jump,
-            Land
+            Land,
+            Roll
         }
     }
 }

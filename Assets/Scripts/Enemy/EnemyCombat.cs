@@ -15,10 +15,16 @@ namespace LendasDoQuintal.Enemy
         [SerializeField] private float fireLifetime = 2.2f;
         [SerializeField] private int fireDamage = 1;
         [SerializeField] private Transform firePoint;
+        [SerializeField] private Sprite[] fireSprites;
+        [SerializeField] private Sprite[] explosionSprites;
+        [SerializeField] private float spitTellDuration = 0.28f;
 
         private float nextHitTime;
         private float nextFireTime;
+        private float spitTimer;
         private EnemyPatrol patrol;
+
+        public bool IsSpitting => spitTimer > 0f;
 
         private void Awake()
         {
@@ -27,6 +33,8 @@ namespace LendasDoQuintal.Enemy
 
         private void Update()
         {
+            spitTimer = Mathf.Max(0f, spitTimer - Time.deltaTime);
+
             if (!useFireAttack || Time.time < nextFireTime || Time.timeScale <= 0f)
             {
                 return;
@@ -69,6 +77,13 @@ namespace LendasDoQuintal.Enemy
             fireDamage = contactDamage;
         }
 
+        public void ConfigureFire(Transform newFirePoint, Sprite[] newFireSprites, Sprite[] newExplosionSprites)
+        {
+            firePoint = newFirePoint;
+            fireSprites = newFireSprites;
+            explosionSprites = newExplosionSprites;
+        }
+
         private int FacingDirection()
         {
             if (patrol != null)
@@ -82,6 +97,7 @@ namespace LendasDoQuintal.Enemy
         private void ShootFire(int facing)
         {
             nextFireTime = Time.time + fireCooldown;
+            spitTimer = spitTellDuration;
 
             Vector3 origin = firePoint != null
                 ? firePoint.position
@@ -91,7 +107,9 @@ namespace LendasDoQuintal.Enemy
             fireball.transform.position = origin;
 
             SpriteRenderer renderer = fireball.AddComponent<SpriteRenderer>();
-            renderer.sprite = FireProjectile.CreateFireSprite();
+            renderer.sprite = fireSprites != null && fireSprites.Length > 0
+                ? fireSprites[0]
+                : FireProjectile.CreateFireSprite();
             renderer.sortingOrder = 18;
 
             CircleCollider2D collider = fireball.AddComponent<CircleCollider2D>();
@@ -103,6 +121,7 @@ namespace LendasDoQuintal.Enemy
             rb.gravityScale = 0f;
 
             FireProjectile projectile = fireball.AddComponent<FireProjectile>();
+            projectile.Configure(fireSprites, explosionSprites);
             projectile.Launch(new Vector2(facing, 0f), fireSpeed, fireDamage, fireLifetime);
         }
     }

@@ -1,4 +1,5 @@
 using LendasDoQuintal.Core;
+using LendasDoQuintal.Systems;
 using UnityEngine;
 
 namespace LendasDoQuintal.Enemy
@@ -9,6 +10,11 @@ namespace LendasDoQuintal.Enemy
         private static Sprite fireSprite;
 
         private Rigidbody2D rb;
+        private SpriteRenderer spriteRenderer;
+        private Sprite[] fireFrames;
+        private Sprite[] explosionFrames;
+        private float frameTimer;
+        private int frameIndex;
         private int damage = 1;
         private float despawnTime;
         private bool launched;
@@ -16,13 +22,16 @@ namespace LendasDoQuintal.Enemy
         private void Awake()
         {
             rb = GetComponent<Rigidbody2D>();
+            spriteRenderer = GetComponent<SpriteRenderer>();
         }
 
         private void Update()
         {
+            AnimateFire();
+
             if (launched && Time.time >= despawnTime)
             {
-                Destroy(gameObject);
+                Explode();
             }
         }
 
@@ -36,11 +45,27 @@ namespace LendasDoQuintal.Enemy
             if (other.CompareTag("Player") && other.TryGetComponent(out Health health))
             {
                 health.TakeDamage(damage);
-                Destroy(gameObject);
+                Explode();
                 return;
             }
 
-            Destroy(gameObject);
+            Explode();
+        }
+
+        public void Configure(Sprite[] newFireFrames, Sprite[] newExplosionFrames)
+        {
+            fireFrames = newFireFrames;
+            explosionFrames = newExplosionFrames;
+
+            if (spriteRenderer == null)
+            {
+                spriteRenderer = GetComponent<SpriteRenderer>();
+            }
+
+            if (spriteRenderer != null && fireFrames != null && fireFrames.Length > 0)
+            {
+                spriteRenderer.sprite = fireFrames[0];
+            }
         }
 
         public void Launch(Vector2 direction, float speed, int newDamage, float lifetime)
@@ -55,6 +80,40 @@ namespace LendasDoQuintal.Enemy
             launched = true;
             rb.linearVelocity = direction.normalized * speed;
             transform.localScale = new Vector3(Mathf.Sign(direction.x), 1f, 1f);
+        }
+
+        private void AnimateFire()
+        {
+            if (spriteRenderer == null || fireFrames == null || fireFrames.Length == 0)
+            {
+                return;
+            }
+
+            frameTimer += Time.deltaTime;
+            if (frameTimer < 1f / 14f)
+            {
+                return;
+            }
+
+            frameTimer = 0f;
+            frameIndex = (frameIndex + 1) % fireFrames.Length;
+            spriteRenderer.sprite = fireFrames[frameIndex];
+        }
+
+        private void Explode()
+        {
+            if (explosionFrames != null && explosionFrames.Length > 0)
+            {
+                GameObject explosion = new GameObject("ChickenFireExplosion");
+                explosion.transform.position = transform.position;
+                SpriteRenderer renderer = explosion.AddComponent<SpriteRenderer>();
+                renderer.sortingOrder = 19;
+
+                OneShotSpriteAnimation animation = explosion.AddComponent<OneShotSpriteAnimation>();
+                animation.Configure(explosionFrames, 18f);
+            }
+
+            Destroy(gameObject);
         }
 
         public static Sprite CreateFireSprite()

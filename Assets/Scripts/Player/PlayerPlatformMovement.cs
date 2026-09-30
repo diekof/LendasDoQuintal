@@ -10,6 +10,9 @@ namespace LendasDoQuintal.Player
         [SerializeField] private float walkSpeed = 5f;
         [SerializeField] private float runSpeed = 7f;
         [SerializeField] private float jumpForce = 12f;
+        [SerializeField] private float rollSpeed = 7.4f;
+        [SerializeField] private float rollDuration = 0.44f;
+        [SerializeField] private float rollCooldown = 0.65f;
 
         [Header("Ground Check")]
         [SerializeField] private Transform groundCheck;
@@ -30,12 +33,17 @@ namespace LendasDoQuintal.Player
         private float horizontalInput;
         private float coyoteCounter;
         private float jumpBufferCounter;
+        private float rollTimer;
+        private float rollCooldownTimer;
+        private float facingDirection = 1f;
+        private float rollDirection = 1f;
         private Vector3 spawnPosition;
         private bool hasLeftGround;
         private static AudioClip jumpClip;
         private static AudioClip landingClip;
 
         public bool IsGrounded { get; private set; }
+        public bool IsRolling => rollTimer > 0f;
         public float HorizontalInput => horizontalInput;
         public float VerticalVelocity => rb.linearVelocity.y;
 
@@ -57,6 +65,7 @@ namespace LendasDoQuintal.Player
         private void Update()
         {
             horizontalInput = InputReader.MoveX();
+            rollCooldownTimer = Mathf.Max(0f, rollCooldownTimer - Time.deltaTime);
 
             bool wasGrounded = IsGrounded;
             float verticalVelocityBeforeGroundCheck = rb.linearVelocity.y;
@@ -75,6 +84,19 @@ namespace LendasDoQuintal.Player
             coyoteCounter = IsGrounded ? coyoteTime : coyoteCounter - Time.deltaTime;
             jumpBufferCounter = InputReader.JumpPressed() ? jumpBuffer : jumpBufferCounter - Time.deltaTime;
 
+            if (IsRolling)
+            {
+                rollTimer = Mathf.Max(0f, rollTimer - Time.deltaTime);
+                jumpBufferCounter = 0f;
+                return;
+            }
+
+            if (InputReader.RollPressed() && IsGrounded && rollCooldownTimer <= 0f)
+            {
+                StartRoll();
+                return;
+            }
+
             if (jumpBufferCounter > 0f && coyoteCounter > 0f)
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
@@ -91,11 +113,20 @@ namespace LendasDoQuintal.Player
 
             float speed = InputReader.RunHeld() ? runSpeed : walkSpeed;
 
+            if (IsRolling)
+            {
+                rb.linearVelocity = new Vector2(rollDirection * rollSpeed, rb.linearVelocity.y);
+                transform.localScale = new Vector3(rollDirection, 1f, 1f);
+                ClampLeftEdge();
+                return;
+            }
+
             rb.linearVelocity = new Vector2(horizontalInput * speed, rb.linearVelocity.y);
 
             if (Mathf.Abs(horizontalInput) > 0.01f)
             {
-                transform.localScale = new Vector3(Mathf.Sign(horizontalInput), 1f, 1f);
+                facingDirection = Mathf.Sign(horizontalInput);
+                transform.localScale = new Vector3(facingDirection, 1f, 1f);
             }
 
             ClampLeftEdge();
@@ -106,6 +137,21 @@ namespace LendasDoQuintal.Player
             groundCheck = newGroundCheck;
             groundMask = newGroundMask;
             ConfigureGroundFilter();
+        }
+
+        private void StartRoll()
+        {
+            rollDirection = Mathf.Abs(horizontalInput) > 0.01f
+                ? Mathf.Sign(horizontalInput)
+                : facingDirection;
+            rollTimer = rollDuration;
+            rollCooldownTimer = rollCooldown;
+            jumpBufferCounter = 0f;
+
+            if (TryGetComponent(out Health health))
+            {
+                health.MakeInvulnerable(rollDuration);
+            }
         }
 
         private bool CheckGrounded()

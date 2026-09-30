@@ -38,6 +38,7 @@ Assets/Scenes/LendasDoQuintal_MVP.unity
 - Caminhada do herói: `Assets/Art/Characters/Hero/Walk/`
 - Soco do herói: `Assets/Art/Characters/Hero/Attack/`
 - Pulo do herói: `Assets/Art/Characters/Hero/Jump/`
+- Rolagem do herói: `Assets/Art/Characters/Hero/Roll/`
 - Impacto do soco: `Assets/Art/Effects/Impact/`
 
 ## Controles
@@ -46,6 +47,7 @@ Assets/Scenes/LendasDoQuintal_MVP.unity
 - `Shift`: correr;
 - `Espaço`: pular;
 - `J`: atacar;
+- `K`: rolar/esquivar;
 - `E`: interagir;
 - `R`: reiniciar após derrota ou fim do protótipo.
 
@@ -54,6 +56,7 @@ Assets/Scenes/LendasDoQuintal_MVP.unity
 - Analógico esquerdo ou direcional: mover;
 - `A`: pular;
 - `X`: atacar;
+- `B`: rolar/esquivar;
 - `Y`: interagir;
 - `LB/RB`: correr;
 - `Start`: reiniciar após derrota ou fim do protótipo.

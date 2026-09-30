@@ -23,6 +23,12 @@ namespace LendasDoQuintal.Editor
         private const string HeroWalkPath = "Assets/Art/Characters/Hero/Walk";
         private const string HeroAttackPath = "Assets/Art/Characters/Hero/Attack";
         private const string HeroJumpPath = "Assets/Art/Characters/Hero/Jump";
+        private const string HeroRollPath = "Assets/Art/Characters/Hero/Roll";
+        private const string ChickenIdlePath = "Assets/Art/Enemies/Chicken/Idle";
+        private const string ChickenWalkPath = "Assets/Art/Enemies/Chicken/Walk";
+        private const string ChickenSpitPath = "Assets/Art/Enemies/Chicken/Spit";
+        private const string ChickenFirePath = "Assets/Art/Enemies/Chicken/Fire";
+        private const string ChickenExplosionPath = "Assets/Art/Enemies/Chicken/Explosion";
         private const string ImpactPath = "Assets/Art/Effects/Impact";
         private const string LoadingArtPath = "Assets/Art/Title/lendas_quintal_title_key_art_pixel.png";
         private const float TargetAspect = 16f / 9f;
@@ -38,7 +44,10 @@ namespace LendasDoQuintal.Editor
             scene.name = "LendasDoQuintal_MVP";
 
             Sprite playerSprite = LoadProjectSprite(HeroSpritePath, 32f) ?? CreateSprite("Player_Placeholder", PixelSpriteKind.Player);
-            Sprite enemySprite = CreateSprite("Enemy_Chicken_Placeholder", PixelSpriteKind.EnemyChicken);
+            Sprite[] chickenIdleSprites = LoadSpriteSequence(ChickenIdlePath, "chicken_idle_side_", 32f);
+            Sprite enemySprite = chickenIdleSprites.Length > 0
+                ? chickenIdleSprites[0]
+                : CreateSprite("Enemy_Chicken_Placeholder", PixelSpriteKind.EnemyChicken);
             Sprite clueSprite = CreateSprite("Clue_Placeholder", PixelSpriteKind.Clue);
             Sprite groundSprite = CreateSprite("Ground_Placeholder", PixelSpriteKind.Ground);
             Sprite houseSprite = CreateSprite("House_Placeholder", PixelSpriteKind.House);
@@ -58,7 +67,14 @@ namespace LendasDoQuintal.Editor
             GameObject player = CreatePlayer(playerSprite);
             Health playerHealth = player.GetComponent<Health>();
 
-            GameObject enemy = CreateEnemy(enemySprite, new Vector3(12f, -2.3f, 0f));
+            GameObject enemy = CreateEnemy(
+                enemySprite,
+                new Vector3(12f, -2.3f, 0f),
+                chickenIdleSprites,
+                LoadSpriteSequence(ChickenWalkPath, "chicken_walk_side_", 32f),
+                LoadSpriteSequence(ChickenSpitPath, "chicken_spit_side_", 32f),
+                LoadSpriteSequence(ChickenFirePath, "chicken_fireball_", 32f),
+                LoadSpriteSequence(ChickenExplosionPath, "chicken_fire_explosion_", 32f));
             _ = enemy;
 
             CreateInteractable(
@@ -76,6 +92,7 @@ namespace LendasDoQuintal.Editor
                 clueMessageSystem,
                 objectiveSystem,
                 playerHealth,
+                playerSprite,
                 out GameObject gameOverPanel,
                 out GameObject endPanel,
                 out GameObject gameplayHud,
@@ -148,6 +165,14 @@ namespace LendasDoQuintal.Editor
             CreateFolder("Assets/Art", "Title");
             CreateFolder("Assets/Art/Characters/Hero", "Attack");
             CreateFolder("Assets/Art/Characters/Hero", "Jump");
+            CreateFolder("Assets/Art/Characters/Hero", "Roll");
+            CreateFolder("Assets/Art", "Enemies");
+            CreateFolder("Assets/Art/Enemies", "Chicken");
+            CreateFolder("Assets/Art/Enemies/Chicken", "Idle");
+            CreateFolder("Assets/Art/Enemies/Chicken", "Walk");
+            CreateFolder("Assets/Art/Enemies/Chicken", "Spit");
+            CreateFolder("Assets/Art/Enemies/Chicken", "Fire");
+            CreateFolder("Assets/Art/Enemies/Chicken", "Explosion");
             CreateFolder("Assets/Art", "Effects");
             CreateFolder("Assets/Art/Effects", "Impact");
             CreateFolder("Assets", "Resources");
@@ -252,6 +277,15 @@ namespace LendasDoQuintal.Editor
                     break;
                 case PixelSpriteKind.Background:
                     DrawBackgroundFallback(pixels);
+                    break;
+                case PixelSpriteKind.HudHealthOrbFill:
+                    DrawHudHealthOrbFill(pixels);
+                    break;
+                case PixelSpriteKind.HudHealthOrbFrame:
+                    DrawHudHealthOrbFrame(pixels);
+                    break;
+                case PixelSpriteKind.HudPortraitFrame:
+                    DrawHudPortraitFrame(pixels);
                     break;
             }
 
@@ -359,6 +393,42 @@ namespace LendasDoQuintal.Editor
             Set(p, 13, 8, new Color32(194, 30, 51, 255));
         }
 
+        private static void DrawHudHealthOrbFill(Color32[] p)
+        {
+            Color32 darkRed = new Color32(116, 18, 32, 255);
+            Color32 red = new Color32(212, 30, 48, 255);
+            Color32 redLight = new Color32(255, 84, 64, 255);
+
+            FillCircle(p, 8, 8, 5, darkRed);
+            FillCircle(p, 7, 7, 4, red);
+            FillCircle(p, 5, 5, 2, redLight);
+            Set(p, 10, 10, new Color32(141, 19, 37, 255));
+        }
+
+        private static void DrawHudHealthOrbFrame(Color32[] p)
+        {
+            Color32 goldDark = new Color32(116, 76, 49, 255);
+            Color32 gold = new Color32(244, 223, 164, 255);
+            Color32 goldHot = Palette.WarmLight;
+
+            DrawCircleRing(p, 8, 8, 7, goldDark);
+            DrawCircleRing(p, 8, 8, 6, gold);
+            Set(p, 4, 3, goldHot);
+            Set(p, 5, 2, goldHot);
+            Set(p, 11, 13, goldDark);
+        }
+
+        private static void DrawHudPortraitFrame(Color32[] p)
+        {
+            FillCircle(p, 8, 8, 8, new Color32(64, 39, 31, 255));
+            FillCircle(p, 8, 8, 7, new Color32(244, 223, 164, 255));
+            FillCircle(p, 8, 8, 5, new Color32(16, 24, 42, 255));
+            DrawCircleRing(p, 8, 8, 7, Palette.WarmLight);
+            DrawCircleRing(p, 8, 8, 5, new Color32(7, 10, 18, 255));
+            Set(p, 3, 2, new Color32(255, 181, 45, 255));
+            Set(p, 12, 13, new Color32(116, 76, 49, 255));
+        }
+
         private static void Outline(Color32[] p)
         {
             Color32[] copy = (Color32[])p.Clone();
@@ -386,6 +456,43 @@ namespace LendasDoQuintal.Editor
                 for (int px = x; px < x + width; px++)
                 {
                     Set(pixels, px, py, color);
+                }
+            }
+        }
+
+        private static void FillCircle(Color32[] pixels, int centerX, int centerY, int radius, Color32 color)
+        {
+            int radiusSquared = radius * radius;
+            for (int y = centerY - radius; y <= centerY + radius; y++)
+            {
+                for (int x = centerX - radius; x <= centerX + radius; x++)
+                {
+                    int dx = x - centerX;
+                    int dy = y - centerY;
+                    if (dx * dx + dy * dy <= radiusSquared)
+                    {
+                        Set(pixels, x, y, color);
+                    }
+                }
+            }
+        }
+
+        private static void DrawCircleRing(Color32[] pixels, int centerX, int centerY, int radius, Color32 color)
+        {
+            int outer = radius * radius;
+            int innerRadius = Mathf.Max(0, radius - 1);
+            int inner = innerRadius * innerRadius;
+            for (int y = centerY - radius; y <= centerY + radius; y++)
+            {
+                for (int x = centerX - radius; x <= centerX + radius; x++)
+                {
+                    int dx = x - centerX;
+                    int dy = y - centerY;
+                    int distance = dx * dx + dy * dy;
+                    if (distance <= outer && distance >= inner)
+                    {
+                        Set(pixels, x, y, color);
+                    }
                 }
             }
         }
@@ -504,12 +611,20 @@ namespace LendasDoQuintal.Editor
                 sprite,
                 LoadSpriteSequence(HeroWalkPath, "hero_walk_side_", 32f),
                 LoadSpriteSequence(HeroAttackPath, "hero_attack_side_", 32f),
-                LoadSpriteSequence(HeroJumpPath, "hero_jump_side_", 32f));
+                LoadSpriteSequence(HeroJumpPath, "hero_jump_side_", 32f),
+                LoadSpriteSequence(HeroRollPath, "hero_roll_side_", 32f));
 
             return player;
         }
 
-        private static GameObject CreateEnemy(Sprite sprite, Vector3 position)
+        private static GameObject CreateEnemy(
+            Sprite sprite,
+            Vector3 position,
+            Sprite[] idleSprites,
+            Sprite[] walkSprites,
+            Sprite[] spitSprites,
+            Sprite[] fireSprites,
+            Sprite[] explosionSprites)
         {
             GameObject enemy = new GameObject("Enemy_Chicken");
             enemy.transform.position = position;
@@ -526,13 +641,18 @@ namespace LendasDoQuintal.Editor
             collider.size = new Vector2(0.8f, 0.8f);
 
             enemy.AddComponent<Health>();
-            enemy.AddComponent<EnemyCombat>();
+            EnemyCombat combat = enemy.AddComponent<EnemyCombat>();
 
             Transform groundCheck = CreateChild(enemy.transform, "GroundCheck", new Vector3(0.45f, -0.5f, 0f));
             Transform wallCheck = CreateChild(enemy.transform, "WallCheck", new Vector3(0.55f, 0f, 0f));
+            Transform firePoint = CreateChild(enemy.transform, "FirePoint", new Vector3(0.9f, 0.12f, 0f));
+            combat.ConfigureFire(firePoint, fireSprites, explosionSprites);
 
             EnemyPatrol patrol = enemy.AddComponent<EnemyPatrol>();
             patrol.Configure(groundCheck, wallCheck, ~0);
+
+            EnemySpriteAnimator spriteAnimator = enemy.AddComponent<EnemySpriteAnimator>();
+            spriteAnimator.Configure(patrol, combat, renderer, idleSprites, walkSprites, spitSprites);
 
             return enemy;
         }
@@ -559,6 +679,7 @@ namespace LendasDoQuintal.Editor
             ClueMessageSystem clueMessageSystem,
             ObjectiveSystem objectiveSystem,
             Health playerHealth,
+            Sprite heroPortraitSprite,
             out GameObject gameOverPanel,
             out GameObject endPanel,
             out GameObject gameplayHud,
@@ -586,15 +707,13 @@ namespace LendasDoQuintal.Editor
 
             gameplayHud = CreateUiRoot(canvas.transform, "GameplayHud");
 
-            Slider healthSlider = CreateSlider(gameplayHud.transform, "HealthBar", new Vector2(18f, -18f));
-            HealthBarUI healthBar = healthSlider.gameObject.AddComponent<HealthBarUI>();
-            healthBar.Configure(playerHealth, healthSlider);
+            CreateAdventureHud(gameplayHud.transform, playerHealth, heroPortraitSprite);
 
-            Text objectiveText = CreateText(gameplayHud.transform, "ObjectiveText", new Vector2(18f, -54f), "Descubra o que aconteceu.", 22);
+            Text objectiveText = CreateText(gameplayHud.transform, "ObjectiveText", new Vector2(18f, -176f), "Descubra o que aconteceu.", 22);
             ObjectiveUI objectiveUI = objectiveText.gameObject.AddComponent<ObjectiveUI>();
             objectiveUI.Configure(objectiveSystem, objectiveText);
 
-            Text clueText = CreateText(gameplayHud.transform, "ClueCounter", new Vector2(18f, -86f), "Pistas: 0", 20);
+            Text clueText = CreateText(gameplayHud.transform, "ClueCounter", new Vector2(18f, -208f), "Pistas: 0", 20);
             ClueCounterUI clueCounter = clueText.gameObject.AddComponent<ClueCounterUI>();
             clueCounter.Configure(clueSystem, clueText);
 
@@ -614,6 +733,125 @@ namespace LendasDoQuintal.Editor
             endPanel.SetActive(false);
 
             return canvas;
+        }
+
+        private static void CreateAdventureHud(Transform parent, Health playerHealth, Sprite heroPortraitSprite)
+        {
+            Sprite orbFillSprite = CreateSprite("Hud_Health_Orb_Fill", PixelSpriteKind.HudHealthOrbFill);
+            Sprite orbFrameSprite = CreateSprite("Hud_Health_Orb_Frame", PixelSpriteKind.HudHealthOrbFrame);
+            Sprite portraitFrameSprite = CreateSprite("Hud_Portrait_Frame", PixelSpriteKind.HudPortraitFrame);
+
+            GameObject root = new GameObject("HeroStatusHud");
+            root.transform.SetParent(parent, false);
+            RectTransform rootRect = root.AddComponent<RectTransform>();
+            rootRect.anchorMin = new Vector2(0f, 1f);
+            rootRect.anchorMax = new Vector2(0f, 1f);
+            rootRect.pivot = new Vector2(0f, 1f);
+            rootRect.anchoredPosition = new Vector2(18f, -18f);
+            rootRect.sizeDelta = new Vector2(610f, 144f);
+
+            CreatePortraitMedallion(root.transform, heroPortraitSprite, portraitFrameSprite);
+
+            Image[] healthOrbs = new Image[7];
+            for (int i = 0; i < healthOrbs.Length; i++)
+            {
+                healthOrbs[i] = CreateHealthOrb(root.transform, orbFrameSprite, orbFillSprite, new Vector2(126f + i * 54f, -8f));
+            }
+
+            Image specialFill = CreateSpecialBar(root.transform, new Vector2(146f, -78f));
+
+            HealthBarUI healthBar = root.AddComponent<HealthBarUI>();
+            healthBar.Configure(playerHealth, healthOrbs, specialFill);
+        }
+
+        private static void CreatePortraitMedallion(Transform parent, Sprite heroPortraitSprite, Sprite frameSprite)
+        {
+            GameObject medallion = new GameObject("HeroPortraitMedallion");
+            medallion.transform.SetParent(parent, false);
+            RectTransform medallionRect = medallion.AddComponent<RectTransform>();
+            medallionRect.anchorMin = new Vector2(0f, 1f);
+            medallionRect.anchorMax = new Vector2(0f, 1f);
+            medallionRect.pivot = new Vector2(0f, 1f);
+            medallionRect.anchoredPosition = Vector2.zero;
+            medallionRect.sizeDelta = new Vector2(112f, 112f);
+
+            Image frame = medallion.AddComponent<Image>();
+            frame.sprite = frameSprite;
+            frame.color = Color.white;
+
+            GameObject portraitMask = new GameObject("HeroFaceMask");
+            portraitMask.transform.SetParent(medallion.transform, false);
+            RectTransform maskRect = portraitMask.AddComponent<RectTransform>();
+            maskRect.anchorMin = new Vector2(0.5f, 0.5f);
+            maskRect.anchorMax = new Vector2(0.5f, 0.5f);
+            maskRect.pivot = new Vector2(0.5f, 0.5f);
+            maskRect.anchoredPosition = new Vector2(0f, -1f);
+            maskRect.sizeDelta = new Vector2(72f, 72f);
+            portraitMask.AddComponent<RectMask2D>();
+
+            Image portrait = CreateUiImage(portraitMask.transform, "HeroFace", heroPortraitSprite, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(142f, 142f));
+            portrait.preserveAspect = true;
+            portrait.rectTransform.anchoredPosition = new Vector2(0f, -28f);
+            portrait.raycastTarget = false;
+        }
+
+        private static Image CreateHealthOrb(Transform parent, Sprite frameSprite, Sprite fillSprite, Vector2 anchoredPosition)
+        {
+            GameObject slot = new GameObject("HealthOrb");
+            slot.transform.SetParent(parent, false);
+            RectTransform slotRect = slot.AddComponent<RectTransform>();
+            slotRect.anchorMin = new Vector2(0f, 1f);
+            slotRect.anchorMax = new Vector2(0f, 1f);
+            slotRect.pivot = new Vector2(0f, 1f);
+            slotRect.anchoredPosition = anchoredPosition;
+            slotRect.sizeDelta = new Vector2(46f, 46f);
+
+            Image fill = CreateUiImage(slot.transform, "Fill", fillSprite, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            fill.color = new Color32(212, 30, 48, 255);
+            fill.raycastTarget = false;
+
+            Image frame = CreateUiImage(slot.transform, "Frame", frameSprite, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            frame.color = Color.white;
+            frame.raycastTarget = false;
+
+            return fill;
+        }
+
+        private static Image CreateSpecialBar(Transform parent, Vector2 anchoredPosition)
+        {
+            GameObject bar = new GameObject("SpecialBar");
+            bar.transform.SetParent(parent, false);
+            RectTransform barRect = bar.AddComponent<RectTransform>();
+            barRect.anchorMin = new Vector2(0f, 1f);
+            barRect.anchorMax = new Vector2(0f, 1f);
+            barRect.pivot = new Vector2(0f, 1f);
+            barRect.anchoredPosition = anchoredPosition;
+            barRect.sizeDelta = new Vector2(404f, 28f);
+
+            Image frame = bar.AddComponent<Image>();
+            frame.color = new Color32(244, 223, 164, 255);
+            frame.raycastTarget = false;
+
+            Image track = CreateUiImage(bar.transform, "Track", null, Vector2.zero, Vector2.one, new Vector2(5f, 5f), new Vector2(-5f, -5f));
+            track.color = new Color32(16, 24, 42, 230);
+            track.raycastTarget = false;
+
+            Image fill = CreateUiImage(bar.transform, "Fill", null, Vector2.zero, Vector2.one, new Vector2(7f, 7f), new Vector2(-7f, -7f));
+            fill.color = new Color32(21, 174, 255, 255);
+            fill.type = Image.Type.Filled;
+            fill.fillMethod = Image.FillMethod.Horizontal;
+            fill.fillOrigin = (int)Image.OriginHorizontal.Left;
+            fill.fillAmount = 0f;
+            fill.raycastTarget = false;
+
+            for (int i = 1; i < 4; i++)
+            {
+                Image marker = CreateUiImage(bar.transform, "SpecialMarker", null, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(5f + i * 98f, 0f), new Vector2(4f, 34f));
+                marker.color = new Color32(202, 96, 31, 255);
+                marker.raycastTarget = false;
+            }
+
+            return fill;
         }
 
         private static void CreateEventSystem()
@@ -870,6 +1108,39 @@ namespace LendasDoQuintal.Editor
             return slider;
         }
 
+        private static Image CreateUiImage(
+            Transform parent,
+            string name,
+            Sprite sprite,
+            Vector2 anchorMin,
+            Vector2 anchorMax,
+            Vector2 offsetMinOrPosition,
+            Vector2 offsetMaxOrSize)
+        {
+            GameObject imageObject = new GameObject(name);
+            imageObject.transform.SetParent(parent, false);
+
+            RectTransform rect = imageObject.AddComponent<RectTransform>();
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+
+            if (anchorMin == anchorMax)
+            {
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = offsetMinOrPosition;
+                rect.sizeDelta = offsetMaxOrSize;
+            }
+            else
+            {
+                rect.offsetMin = offsetMinOrPosition;
+                rect.offsetMax = offsetMaxOrSize;
+            }
+
+            Image image = imageObject.AddComponent<Image>();
+            image.sprite = sprite;
+            return image;
+        }
+
         private static Text CreateText(Transform parent, string name, Vector2 anchoredPosition, string value, int size)
         {
             GameObject textObject = new GameObject(name);
@@ -996,7 +1267,10 @@ namespace LendasDoQuintal.Editor
         Ground,
         House,
         Saci,
-        Background
+        Background,
+        HudHealthOrbFill,
+        HudHealthOrbFrame,
+        HudPortraitFrame
     }
 
     internal static class Palette

@@ -36,6 +36,12 @@ namespace LendasDoQuintal.Core
                 Input.GetKeyDown(KeyCode.JoystickButton3);
         }
 
+        public static bool RollPressed()
+        {
+            return Input.GetKeyDown(KeyCode.K) ||
+                Input.GetKeyDown(KeyCode.JoystickButton1);
+        }
+
         public static bool RestartPressed()
         {
             return Input.GetKeyDown(KeyCode.R) ||

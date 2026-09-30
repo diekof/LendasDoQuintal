@@ -18,6 +18,7 @@ namespace LendasDoQuintal.Enemy
         private int direction = 1;
 
         public int Direction => direction;
+        public float Speed => speed;
 
         private void Awake()
         {

@@ -291,6 +291,17 @@ Separar mudanças por escopo. Não usar `git add -A` sem revisar.
 6. Criar build Windows da demo.
 7. Abrir PR da branch `codex/unity-poc` para `main`.
 
+## Bugs/Pendências Para Depois do Reset de Créditos
+
+O usuário pediu para deixar estes itens para depois do reset dos créditos:
+
+1. Ao pular e encostar em uma plataforma, o herói fica travado no ar.
+2. Ao saltar o inimigo e ficar atrás dele, o inimigo não vira para tentar acertar o herói.
+3. Ao trocar de dificuldade, nada muda no jogo.
+4. Adicionar mais inimigos na área jogável.
+5. A música de gameplay parou.
+6. Ao chegar no final, o jogo está mandando para o menu principal.
+
 ## Observações Técnicas
 
 O projeto está em Unity 6.6.
