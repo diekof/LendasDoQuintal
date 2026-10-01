@@ -23,6 +23,8 @@ namespace LendasDoQuintal.Player
         private static AudioClip hitPunchClip;
 
         public bool IsAttacking => attackAnimationTimer > 0f;
+        public int DamageBonus { get; set; }
+        public bool ItemStolen { get; set; }
 
         private void Awake()
         {
@@ -40,7 +42,7 @@ namespace LendasDoQuintal.Player
         {
             attackAnimationTimer = Mathf.Max(0f, attackAnimationTimer - Time.deltaTime);
 
-            if (InputReader.AttackPressed() && Time.time >= nextAttackTime)
+            if (Time.timeScale > 0f && !ItemStolen && InputReader.AttackPressed() && Time.time >= nextAttackTime)
             {
                 Attack();
             }
@@ -68,7 +70,7 @@ namespace LendasDoQuintal.Player
 
                 if (hit.TryGetComponent(out Health health))
                 {
-                    health.TakeDamage(damage);
+                    health.TakeDamage(damage + DamageBonus);
                     SpawnImpact(hit.transform.position);
                     hitEnemy = true;
                 }

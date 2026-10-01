@@ -492,8 +492,22 @@ namespace LendasDoQuintal.Systems
 
         private void StartGame()
         {
+            StartGameCore(false);
+        }
+
+        private void ContinueGame()
+        {
+            StartGameCore(true);
+        }
+
+        private void StartGameCore(bool continueRun)
+        {
             waitingForSplashInput = false;
+            GetComponent<GameFlowController>()?.BeginRun();
             ApplyDifficulty();
+            Phase1Director phase = GetComponent<Phase1Director>();
+            if (continueRun && phase != null && !phase.HasSavedRun) continueRun = false;
+            if (continueRun) phase?.ContinueRun(); else phase?.BeginNewRun();
             SetActive(splashPanel, false);
             SetActive(menuPanel, false);
             SetActive(difficultyPanel, false);
@@ -504,11 +518,27 @@ namespace LendasDoQuintal.Systems
             Time.timeScale = 1f;
         }
 
+        public void ReturnToSelection()
+        {
+            Time.timeScale = 0f;
+            SetGameplayEnabled(false);
+            SetGameplayMusicEnabled(false);
+            SetActive(gameplayHud, false);
+            SetActive(splashPanel, false);
+            SetActive(menuPanel, false);
+            playerHealth?.Restore();
+            PlayMenuMusic();
+            ShowDifficulty();
+        }
+
         private void ApplyDifficulty()
         {
             int health = 5;
             int damage = 1;
             float speed = 2f;
+            float fireCooldown = 1.8f;
+            float fireSpeed = 5.5f;
+            float fireRange = 6f;
 
             switch (selectedDifficulty)
             {
@@ -516,20 +546,31 @@ namespace LendasDoQuintal.Systems
                     health = 7;
                     damage = 1;
                     speed = 1.4f;
+                    fireCooldown = 2.6f;
+                    fireSpeed = 4.4f;
+                    fireRange = 4.8f;
                     break;
                 case DemoDifficulty.Hard:
                     health = 4;
                     damage = 2;
                     speed = 2.6f;
+                    fireCooldown = 1.25f;
+                    fireSpeed = 6.4f;
+                    fireRange = 7f;
                     break;
                 case DemoDifficulty.Insane:
                     health = 2;
                     damage = 2;
                     speed = 3.4f;
+                    fireCooldown = 0.85f;
+                    fireSpeed = 7.6f;
+                    fireRange = 8.2f;
                     break;
             }
 
             playerHealth?.SetMaxHealth(health);
+            playerHealth?.GetComponent<LendasDoQuintal.Player.HeroSkillTree>()?.SetBaseHealth(health);
+            GetComponent<Phase1Director>()?.SetDifficulty(damage, speed / 2f);
 
             if (enemyPatrols != null)
             {
@@ -543,7 +584,13 @@ namespace LendasDoQuintal.Systems
             {
                 foreach (EnemyCombat combat in enemyCombats)
                 {
-                    combat?.SetContactDamage(damage);
+                    if (combat == null)
+                    {
+                        continue;
+                    }
+
+                    combat.SetContactDamage(damage);
+                    combat.SetFireProfile(fireCooldown, fireSpeed, fireRange);
                 }
             }
         }
@@ -570,6 +617,10 @@ namespace LendasDoQuintal.Systems
             {
                 return;
             }
+
+            // Generated phases already configure their own music target (Saci boss or encounter).
+            gameplayMusic = GetComponent<GameplayMusicProximity>();
+            if (gameplayMusic != null) return;
 
             Transform playerTransform = FindPlayerTransform();
             SaciEncounter saciEncounter = FindAnyObjectByType<SaciEncounter>();
@@ -630,7 +681,7 @@ namespace LendasDoQuintal.Systems
         private void WireButtons()
         {
             playButton?.onClick.AddListener(StartGame);
-            continueButton?.onClick.AddListener(StartGame);
+            continueButton?.onClick.AddListener(ContinueGame);
             difficultyButton?.onClick.AddListener(ShowDifficulty);
             quitButton?.onClick.AddListener(QuitGame);
             easyButton?.onClick.AddListener(SelectEasy);
@@ -651,7 +702,7 @@ namespace LendasDoQuintal.Systems
         private void UnwireButtons()
         {
             playButton?.onClick.RemoveListener(StartGame);
-            continueButton?.onClick.RemoveListener(StartGame);
+            continueButton?.onClick.RemoveListener(ContinueGame);
             difficultyButton?.onClick.RemoveListener(ShowDifficulty);
             quitButton?.onClick.RemoveListener(QuitGame);
             easyButton?.onClick.RemoveListener(SelectEasy);
@@ -682,11 +733,6 @@ namespace LendasDoQuintal.Systems
             if (menuMusic == null)
             {
                 menuMusic = Resources.Load<AudioClip>("Audio/Sombrio Horizonte");
-            }
-
-            if (musicSource == null)
-            {
-                musicSource = GetComponent<AudioSource>();
             }
 
             if (musicSource == null)

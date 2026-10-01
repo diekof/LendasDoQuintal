@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/LendasDoQuintal_Phase1.unity
+    guid: f2a5a742c0510ab48abf8370afc370dd
+  - enabled: 1
     path: Assets/Scenes/LendasDoQuintal_MVP.unity
     guid: 343568aca1b9e7145868e17145f2edc1
   m_configObjects:

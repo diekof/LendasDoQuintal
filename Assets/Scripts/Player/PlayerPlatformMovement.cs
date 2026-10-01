@@ -46,6 +46,8 @@ namespace LendasDoQuintal.Player
         public bool IsRolling => rollTimer > 0f;
         public float HorizontalInput => horizontalInput;
         public float VerticalVelocity => rb.linearVelocity.y;
+        public float RollCooldownMultiplier { get; set; } = 1f;
+        public void SetRecoveryPoint(Vector3 position) => spawnPosition = position;
 
         private void Awake()
         {
@@ -64,6 +66,7 @@ namespace LendasDoQuintal.Player
 
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
             horizontalInput = InputReader.MoveX();
             rollCooldownTimer = Mathf.Max(0f, rollCooldownTimer - Time.deltaTime);
 
@@ -145,7 +148,7 @@ namespace LendasDoQuintal.Player
                 ? Mathf.Sign(horizontalInput)
                 : facingDirection;
             rollTimer = rollDuration;
-            rollCooldownTimer = rollCooldown;
+            rollCooldownTimer = Mathf.Max(rollDuration + 0.12f, rollCooldown * RollCooldownMultiplier);
             jumpBufferCounter = 0f;
 
             if (TryGetComponent(out Health health))

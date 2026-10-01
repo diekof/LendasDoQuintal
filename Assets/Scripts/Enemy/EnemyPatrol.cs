@@ -43,8 +43,7 @@ namespace LendasDoQuintal.Enemy
 
         private void Flip()
         {
-            direction *= -1;
-            transform.localScale = new Vector3(direction, 1f, 1f);
+            FaceDirection(-direction);
         }
 
         private bool HasBlockingHit(Vector3 position)
@@ -92,6 +91,18 @@ namespace LendasDoQuintal.Enemy
         public void SetSpeed(float value)
         {
             speed = Mathf.Max(0f, value);
+        }
+
+        public void FaceDirection(int newDirection)
+        {
+            int signedDirection = newDirection >= 0 ? 1 : -1;
+            if (direction == signedDirection)
+            {
+                return;
+            }
+
+            direction = signedDirection;
+            transform.localScale = new Vector3(direction, 1f, 1f);
         }
 
         private void ConfigureGroundFilter()

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Collections.Generic;
 using LendasDoQuintal.Camera;
 using LendasDoQuintal.Core;
 using LendasDoQuintal.Enemy;
@@ -14,7 +15,7 @@ using UnityEngine.UI;
 
 namespace LendasDoQuintal.Editor
 {
-    public static class MvpSceneBuilder
+    public static partial class MvpSceneBuilder
     {
         private const string ScenePath = "Assets/Scenes/LendasDoQuintal_MVP.unity";
         private const string GeneratedPath = "Assets/Generated";
@@ -37,6 +38,11 @@ namespace LendasDoQuintal.Editor
 
         [MenuItem("Lendas do Quintal/Build MVP Scene")]
         public static void BuildMvpScene()
+        {
+            BuildBaseScene(ScenePath);
+        }
+
+        private static void BuildBaseScene(string scenePath)
         {
             EnsureFolders();
 
@@ -67,15 +73,17 @@ namespace LendasDoQuintal.Editor
             GameObject player = CreatePlayer(playerSprite);
             Health playerHealth = player.GetComponent<Health>();
 
-            GameObject enemy = CreateEnemy(
-                enemySprite,
-                new Vector3(12f, -2.3f, 0f),
-                chickenIdleSprites,
-                LoadSpriteSequence(ChickenWalkPath, "chicken_walk_side_", 32f),
-                LoadSpriteSequence(ChickenSpitPath, "chicken_spit_side_", 32f),
-                LoadSpriteSequence(ChickenFirePath, "chicken_fireball_", 32f),
-                LoadSpriteSequence(ChickenExplosionPath, "chicken_fire_explosion_", 32f));
-            _ = enemy;
+            Sprite[] chickenWalkSprites = LoadSpriteSequence(ChickenWalkPath, "chicken_walk_side_", 32f);
+            Sprite[] chickenSpitSprites = LoadSpriteSequence(ChickenSpitPath, "chicken_spit_side_", 32f);
+            Sprite[] chickenFireSprites = LoadSpriteSequence(ChickenFirePath, "chicken_fireball_", 32f);
+            Sprite[] chickenExplosionSprites = LoadSpriteSequence(ChickenExplosionPath, "chicken_fire_explosion_", 32f);
+
+            List<GameObject> enemies = new List<GameObject>
+            {
+                CreateEnemy(enemySprite, new Vector3(12f, -2.3f, 0f), chickenIdleSprites, chickenWalkSprites, chickenSpitSprites, chickenFireSprites, chickenExplosionSprites),
+                CreateEnemy(enemySprite, new Vector3(17.5f, -2.3f, 0f), chickenIdleSprites, chickenWalkSprites, chickenSpitSprites, chickenFireSprites, chickenExplosionSprites),
+                CreateEnemy(enemySprite, new Vector3(21.5f, -2.3f, 0f), chickenIdleSprites, chickenWalkSprites, chickenSpitSprites, chickenFireSprites, chickenExplosionSprites)
+            };
 
             CreateInteractable(
                 "Carta_Rasgada",
@@ -135,21 +143,12 @@ namespace LendasDoQuintal.Editor
                 insaneButton,
                 selectedDifficultyLabel,
                 playerHealth,
-                new[] { enemy.GetComponent<EnemyPatrol>() },
-                new[] { enemy.GetComponent<EnemyCombat>() },
-                new MonoBehaviour[]
-                {
-                    player.GetComponent<PlayerPlatformMovement>(),
-                    player.GetComponent<PlayerCombat>(),
-                    player.GetComponent<PlayerInteraction>(),
-                    enemy.GetComponent<EnemyPatrol>(),
-                    enemy.GetComponent<EnemyCombat>(),
-                    saciEncounter.GetComponent<SaciEncounter>(),
-                    gameplayMusic
-                });
+                CollectComponents<EnemyPatrol>(enemies),
+                CollectComponents<EnemyCombat>(enemies),
+                BuildGameplayControllers(player, enemies, saciEncounter, gameplayMusic));
 
-            EditorSceneManager.SaveScene(scene, ScenePath);
-            AddSceneToBuildSettings(ScenePath);
+            EditorSceneManager.SaveScene(scene, scenePath);
+            AddSceneToBuildSettings(scenePath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
@@ -543,12 +542,14 @@ namespace LendasDoQuintal.Editor
         {
             GameObject environment = new GameObject("Environment");
 
-            CreateBlock("Casa_Piso", groundSprite, new Vector3(0f, -3f, 0f), new Vector3(14f, 0.8f, 1f), environment.transform);
-            CreateBlock("Quintal_Chao", groundSprite, new Vector3(14f, -3f, 0f), new Vector3(22f, 1f, 1f), environment.transform);
+            CreateInvisibleCollider("Casa_Piso_Collider", new Vector3(0f, -3f, 0f), new Vector2(14f, 0.8f), environment.transform);
+            CreateInvisibleCollider("Quintal_Chao_Collider", new Vector3(14f, -3f, 0f), new Vector2(22f, 1f), environment.transform);
+            CreateGroundVisual("Casa_Piso_Visual", new Vector3(0f, -3.1f, 0f), 14f, environment.transform);
+            CreateGroundVisual("Quintal_Chao_Visual", new Vector3(14f, -3.12f, 0f), 22f, environment.transform);
             CreateBlock("Mesa_Obstaculo", houseSprite, new Vector3(-2f, -1.9f, 0f), new Vector3(1.5f, 0.5f, 1f), environment.transform);
-            CreateBlock("Plataforma_Poco", groundSprite, new Vector3(8f, -1.5f, 0f), new Vector3(3f, 0.45f, 1f), environment.transform);
-            CreateBlock("Plataforma_Galinheiro", groundSprite, new Vector3(15f, -0.6f, 0f), new Vector3(3.2f, 0.45f, 1f), environment.transform);
-            CreateBlock("Entrada_Mata", groundSprite, new Vector3(24f, -1.4f, 0f), new Vector3(2.5f, 0.45f, 1f), environment.transform);
+            CreateTreePlatform("Arvore_Poco", new Vector3(8f, -1.5f, 0f), new Vector2(3f, 0.42f), environment.transform);
+            CreateTreePlatform("Arvore_Galinheiro", new Vector3(15f, -0.6f, 0f), new Vector2(3.2f, 0.42f), environment.transform);
+            CreateTreePlatform("Arvore_Entrada_Mata", new Vector3(24f, -1.4f, 0f), new Vector2(2.5f, 0.42f), environment.transform);
         }
 
         private static GameObject CreateBlock(string name, Sprite sprite, Vector3 position, Vector3 scale, Transform parent, bool solid = true)
@@ -564,10 +565,75 @@ namespace LendasDoQuintal.Editor
 
             if (solid)
             {
-                block.AddComponent<BoxCollider2D>();
+                BoxCollider2D collider = block.AddComponent<BoxCollider2D>();
+                collider.sharedMaterial = CreateNoFrictionMaterial();
             }
 
             return block;
+        }
+
+        private static GameObject CreateInvisibleCollider(string name, Vector3 position, Vector2 size, Transform parent)
+        {
+            GameObject block = new GameObject(name);
+            block.transform.SetParent(parent);
+            block.transform.position = position;
+
+            BoxCollider2D collider = block.AddComponent<BoxCollider2D>();
+            collider.size = size;
+            collider.sharedMaterial = CreateNoFrictionMaterial();
+
+            return block;
+        }
+
+        private static void CreateGroundVisual(string name, Vector3 position, float width, Transform parent)
+        {
+            GameObject root = new GameObject(name);
+            root.transform.SetParent(parent);
+            root.transform.position = position;
+
+            CreateVisualRect($"{name}_Top", root.transform, new Vector2(0f, 0.18f), new Vector2(width, 0.18f), new Color32(68, 42, 28, 235), 1);
+            CreateVisualRect($"{name}_Grass", root.transform, new Vector2(0f, -0.02f), new Vector2(width, 0.12f), new Color32(43, 112, 57, 230), 2);
+            CreateVisualRect($"{name}_Shadow", root.transform, new Vector2(0f, -0.18f), new Vector2(width, 0.18f), new Color32(16, 24, 26, 210), 0);
+        }
+
+        private static void CreateTreePlatform(string name, Vector3 position, Vector2 colliderSize, Transform parent)
+        {
+            GameObject root = CreateInvisibleCollider($"{name}_Collider", position, colliderSize, parent);
+
+            CreateVisualRect($"{name}_Branch", root.transform, new Vector2(0f, 0.04f), new Vector2(colliderSize.x, 0.18f), new Color32(95, 53, 30, 255), 4);
+            CreateVisualRect($"{name}_Branch_Light", root.transform, new Vector2(0.1f, 0.14f), new Vector2(colliderSize.x * 0.78f, 0.05f), new Color32(202, 96, 31, 230), 5);
+            CreateVisualRect($"{name}_Leaves", root.transform, new Vector2(0f, 0.3f), new Vector2(colliderSize.x * 1.08f, 0.16f), new Color32(43, 117, 50, 235), 3);
+            CreateVisualRect($"{name}_Moss", root.transform, new Vector2(0f, -0.1f), new Vector2(colliderSize.x * 0.92f, 0.08f), new Color32(111, 190, 35, 210), 5);
+
+            GameObject trunk = new GameObject($"{name}_Trunk");
+            trunk.transform.SetParent(root.transform);
+            trunk.transform.localPosition = new Vector3(-colliderSize.x * 0.32f, -0.85f, 0f);
+            CreateVisualRect($"{name}_Trunk_Core", trunk.transform, Vector2.zero, new Vector2(0.32f, 1.55f), new Color32(45, 28, 24, 235), 1);
+            CreateVisualRect($"{name}_Trunk_Highlight", trunk.transform, new Vector2(0.06f, 0.1f), new Vector2(0.08f, 1.28f), new Color32(95, 53, 30, 225), 2);
+        }
+
+        private static SpriteRenderer CreateVisualRect(string name, Transform parent, Vector2 localPosition, Vector2 size, Color32 color, int sortingOrder)
+        {
+            GameObject visual = new GameObject(name);
+            visual.transform.SetParent(parent);
+            visual.transform.localPosition = new Vector3(localPosition.x, localPosition.y, 0f);
+            visual.transform.localScale = new Vector3(size.x, size.y, 1f);
+
+            SpriteRenderer renderer = visual.AddComponent<SpriteRenderer>();
+            renderer.sprite = CreateSolidSprite(name, color);
+            renderer.sortingOrder = sortingOrder;
+            return renderer;
+        }
+
+        private static Sprite CreateSolidSprite(string name, Color32 color)
+        {
+            Texture2D texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            texture.SetPixel(0, 0, color);
+            texture.filterMode = FilterMode.Point;
+            texture.Apply();
+            Sprite sprite = Sprite.Create(texture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f), 1f);
+            sprite.name = name;
+            return sprite;
         }
 
         private static GameObject CreatePlayer(Sprite sprite)
@@ -586,6 +652,7 @@ namespace LendasDoQuintal.Editor
 
             BoxCollider2D collider = player.AddComponent<BoxCollider2D>();
             collider.size = new Vector2(0.8f, 1.2f);
+            collider.sharedMaterial = CreateNoFrictionMaterial();
 
             Health health = player.AddComponent<Health>();
             _ = health;
@@ -639,6 +706,7 @@ namespace LendasDoQuintal.Editor
 
             BoxCollider2D collider = enemy.AddComponent<BoxCollider2D>();
             collider.size = new Vector2(0.8f, 0.8f);
+            collider.sharedMaterial = CreateNoFrictionMaterial();
 
             enemy.AddComponent<Health>();
             EnemyCombat combat = enemy.AddComponent<EnemyCombat>();
@@ -655,6 +723,55 @@ namespace LendasDoQuintal.Editor
             spriteAnimator.Configure(patrol, combat, renderer, idleSprites, walkSprites, spitSprites);
 
             return enemy;
+        }
+
+        private static T[] CollectComponents<T>(IReadOnlyList<GameObject> objects) where T : Component
+        {
+            List<T> components = new List<T>();
+            foreach (GameObject target in objects)
+            {
+                if (target != null && target.TryGetComponent(out T component))
+                {
+                    components.Add(component);
+                }
+            }
+
+            return components.ToArray();
+        }
+
+        private static MonoBehaviour[] BuildGameplayControllers(GameObject player, IReadOnlyList<GameObject> enemies, GameObject saciEncounter, GameplayMusicProximity gameplayMusic)
+        {
+            List<MonoBehaviour> controllers = new List<MonoBehaviour>
+            {
+                player.GetComponent<PlayerPlatformMovement>(),
+                player.GetComponent<PlayerCombat>(),
+                player.GetComponent<PlayerInteraction>()
+            };
+
+            foreach (GameObject enemy in enemies)
+            {
+                if (enemy == null)
+                {
+                    continue;
+                }
+
+                controllers.Add(enemy.GetComponent<EnemyPatrol>());
+                controllers.Add(enemy.GetComponent<EnemyCombat>());
+                controllers.Add(enemy.GetComponent<EnemySpriteAnimator>());
+            }
+
+            controllers.Add(saciEncounter.GetComponent<SaciEncounter>());
+            controllers.Add(gameplayMusic);
+            return controllers.ToArray();
+        }
+
+        private static PhysicsMaterial2D CreateNoFrictionMaterial()
+        {
+            return new PhysicsMaterial2D("NoFriction")
+            {
+                friction = 0f,
+                bounciness = 0f
+            };
         }
 
         private static void CreateInteractable(string name, Sprite sprite, Vector3 position, ClueSystem clueSystem, ClueMessageSystem clueMessageSystem, string clueId, string message)

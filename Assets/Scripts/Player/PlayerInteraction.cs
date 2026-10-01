@@ -11,7 +11,7 @@ namespace LendasDoQuintal.Player
 
         private void Update()
         {
-            if (!InputReader.InteractPressed() || interactionPoint == null)
+            if (Time.timeScale <= 0f || !InputReader.InteractPressed() || interactionPoint == null)
             {
                 return;
             }

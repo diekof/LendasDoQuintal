@@ -302,6 +302,8 @@ O usuário pediu para deixar estes itens para depois do reset dos créditos:
 5. A música de gameplay parou.
 6. Ao chegar no final, o jogo está mandando para o menu principal.
 
+Status posterior: foram aplicadas correções em código para esses itens, incluindo material sem atrito no player/plataformas, inimigos virando para o player, dificuldade alterando vida/dano/velocidade/fogo, três galinhas no MVP, AudioSource separado para música de gameplay e pausa no painel final/game over. Ainda precisa validar no Unity Editor com `Lendas do Quintal > Build MVP Scene`, porque o Unity batch local saiu antes de compilar por inicialização/licença.
+
 ## Observações Técnicas
 
 O projeto está em Unity 6.6.

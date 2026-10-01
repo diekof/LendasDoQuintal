@@ -17,6 +17,7 @@ namespace LendasDoQuintal.Core
         public int MaxHealth => maxHealth;
         public bool IsDead => CurrentHealth <= 0;
         public bool IsInvulnerable => Time.time < invulnerableUntil;
+        public void KeepOnDeath() => destroyOnDeath = false;
 
         private void Awake()
         {

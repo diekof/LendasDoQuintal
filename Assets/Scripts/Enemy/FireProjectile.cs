@@ -44,6 +44,11 @@ namespace LendasDoQuintal.Enemy
 
             if (other.CompareTag("Player") && other.TryGetComponent(out Health health))
             {
+                if (health.IsInvulnerable)
+                {
+                    return;
+                }
+
                 health.TakeDamage(damage);
                 Explode();
                 return;

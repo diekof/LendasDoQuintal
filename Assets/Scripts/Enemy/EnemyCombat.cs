@@ -18,6 +18,7 @@ namespace LendasDoQuintal.Enemy
         [SerializeField] private Sprite[] fireSprites;
         [SerializeField] private Sprite[] explosionSprites;
         [SerializeField] private float spitTellDuration = 0.28f;
+        [SerializeField] private float turnToPlayerRange = 7f;
 
         private float nextHitTime;
         private float nextFireTime;
@@ -48,6 +49,14 @@ namespace LendasDoQuintal.Enemy
 
             Vector2 toPlayer = player.transform.position - transform.position;
             int facing = FacingDirection();
+            bool playerCloseEnoughToTurn = Mathf.Abs(toPlayer.x) <= turnToPlayerRange && Mathf.Abs(toPlayer.y) <= 2.2f;
+            if (playerCloseEnoughToTurn && Mathf.Abs(toPlayer.x) > 0.1f && Mathf.Sign(toPlayer.x) != facing)
+            {
+                int newFacing = toPlayer.x >= 0f ? 1 : -1;
+                patrol?.FaceDirection(newFacing);
+                facing = newFacing;
+            }
+
             bool playerInFront = Mathf.Sign(toPlayer.x) == facing;
             bool playerInRange = Mathf.Abs(toPlayer.x) <= fireRange && Mathf.Abs(toPlayer.y) <= 1.8f;
 
@@ -75,6 +84,13 @@ namespace LendasDoQuintal.Enemy
         {
             contactDamage = Mathf.Max(1, value);
             fireDamage = contactDamage;
+        }
+
+        public void SetFireProfile(float newCooldown, float newSpeed, float newRange)
+        {
+            fireCooldown = Mathf.Max(0.35f, newCooldown);
+            fireSpeed = Mathf.Max(1f, newSpeed);
+            fireRange = Mathf.Max(1f, newRange);
         }
 
         public void ConfigureFire(Transform newFirePoint, Sprite[] newFireSprites, Sprite[] newExplosionSprites)

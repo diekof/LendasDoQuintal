@@ -73,7 +73,15 @@ namespace LendasDoQuintal.Systems
         {
             if (audioSource == null)
             {
-                audioSource = GetComponent<AudioSource>();
+                AudioSource[] sources = GetComponents<AudioSource>();
+                foreach (AudioSource source in sources)
+                {
+                    if (source != null && source != audioSource && source.clip == musicClip)
+                    {
+                        audioSource = source;
+                        break;
+                    }
+                }
             }
 
             if (audioSource == null)

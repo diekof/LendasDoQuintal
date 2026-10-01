@@ -14,6 +14,8 @@ O repositório contém:
 
 ## Como Testar a POC
 
+Para a Fase 1 com percurso de pelo menos 3 minutos até o Saci, cinco pistas, quatro tipos de inimigos, checkpoints e árvore de habilidades, use **Lendas do Quintal > Build Phase 1 Scene** e rode `Assets/Scenes/LendasDoQuintal_Phase1.unity`. Veja `doc/PHASE1_IMPLEMENTATION.md` para regras, controles e limites do protótipo. `Tab` abre a árvore; `L` usa o especial desbloqueado.
+
 1. Abra esta pasta no Unity Hub.
 2. Use uma versão Unity 2D compatível com projetos C# e UGUI.
 3. No editor, abra o menu:
