@@ -11,11 +11,7 @@ namespace LendasDoQuintal.UI
 
         private void OnEnable()
         {
-            if (clueSystem != null)
-            {
-                clueSystem.Changed += UpdateText;
-                UpdateText(clueSystem.Count);
-            }
+            Subscribe();
         }
 
         private void OnDisable()
@@ -36,8 +32,24 @@ namespace LendasDoQuintal.UI
 
         public void Configure(ClueSystem newClueSystem, Text newLabel)
         {
+            if (clueSystem != null)
+            {
+                clueSystem.Changed -= UpdateText;
+            }
+
             clueSystem = newClueSystem;
             label = newLabel;
+            Subscribe();
+        }
+
+        private void Subscribe()
+        {
+            if (clueSystem != null)
+            {
+                clueSystem.Changed -= UpdateText;
+                clueSystem.Changed += UpdateText;
+                UpdateText(clueSystem.Count);
+            }
         }
     }
 }

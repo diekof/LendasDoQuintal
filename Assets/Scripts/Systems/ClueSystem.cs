@@ -11,6 +11,9 @@ namespace LendasDoQuintal.Systems
         private readonly HashSet<string> foundClues = new HashSet<string>();
 
         public int Count => foundClues.Count;
+        public bool Contains(string clueId) => foundClues.Contains(clueId);
+        public string[] Capture() => new List<string>(foundClues).ToArray();
+        public void ResetClues() { foundClues.Clear(); Changed?.Invoke(0); }
 
         public bool RegisterClue(string clueId)
         {

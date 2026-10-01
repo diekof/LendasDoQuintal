@@ -7,15 +7,14 @@ namespace LendasDoQuintal.UI
     public class HealthBarUI : MonoBehaviour
     {
         [SerializeField] private Health targetHealth;
-        [SerializeField] private Slider slider;
+        [SerializeField] private Image[] healthOrbs;
+        [SerializeField] private Image specialFill;
+        [SerializeField] private Color fullOrbColor = new Color32(212, 30, 48, 255);
+        [SerializeField] private Color emptyOrbColor = new Color32(64, 24, 36, 180);
 
         private void OnEnable()
         {
-            if (targetHealth != null)
-            {
-                targetHealth.Changed += UpdateValue;
-                UpdateValue(targetHealth.CurrentHealth, targetHealth.MaxHealth);
-            }
+            Subscribe();
         }
 
         private void OnDisable()
@@ -28,19 +27,55 @@ namespace LendasDoQuintal.UI
 
         private void UpdateValue(int current, int max)
         {
-            if (slider == null)
+            if (healthOrbs == null)
             {
                 return;
             }
 
-            slider.maxValue = max;
-            slider.value = current;
+            for (int i = 0; i < healthOrbs.Length; i++)
+            {
+                Image orb = healthOrbs[i];
+                if (orb == null)
+                {
+                    continue;
+                }
+
+                GameObject slot = orb.transform.parent != null ? orb.transform.parent.gameObject : orb.gameObject;
+                slot.SetActive(i < max);
+                orb.color = i < current ? fullOrbColor : emptyOrbColor;
+            }
         }
 
-        public void Configure(Health newTargetHealth, Slider newSlider)
+        public void Configure(Health newTargetHealth, Image[] newHealthOrbs, Image newSpecialFill)
         {
+            if (targetHealth != null)
+            {
+                targetHealth.Changed -= UpdateValue;
+            }
+
             targetHealth = newTargetHealth;
-            slider = newSlider;
+            healthOrbs = newHealthOrbs;
+            specialFill = newSpecialFill;
+            SetSpecialValue(0f);
+            Subscribe();
+        }
+
+        public void SetSpecialValue(float normalizedValue)
+        {
+            if (specialFill != null)
+            {
+                specialFill.fillAmount = Mathf.Clamp01(normalizedValue);
+            }
+        }
+
+        private void Subscribe()
+        {
+            if (targetHealth != null)
+            {
+                targetHealth.Changed -= UpdateValue;
+                targetHealth.Changed += UpdateValue;
+                UpdateValue(targetHealth.CurrentHealth, targetHealth.MaxHealth);
+            }
         }
     }
 }

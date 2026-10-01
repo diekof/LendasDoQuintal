@@ -11,11 +11,7 @@ namespace LendasDoQuintal.UI
 
         private void OnEnable()
         {
-            if (objectiveSystem != null)
-            {
-                objectiveSystem.Changed += UpdateText;
-                UpdateText(objectiveSystem.CurrentObjective);
-            }
+            Subscribe();
         }
 
         private void OnDisable()
@@ -36,8 +32,24 @@ namespace LendasDoQuintal.UI
 
         public void Configure(ObjectiveSystem newObjectiveSystem, Text newLabel)
         {
+            if (objectiveSystem != null)
+            {
+                objectiveSystem.Changed -= UpdateText;
+            }
+
             objectiveSystem = newObjectiveSystem;
             label = newLabel;
+            Subscribe();
+        }
+
+        private void Subscribe()
+        {
+            if (objectiveSystem != null)
+            {
+                objectiveSystem.Changed -= UpdateText;
+                objectiveSystem.Changed += UpdateText;
+                UpdateText(objectiveSystem.CurrentObjective);
+            }
         }
     }
 }
